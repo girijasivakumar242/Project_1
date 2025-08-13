@@ -1,0 +1,109 @@
+.home-page {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, #f8c3a0, #fcd5c0);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 209vh;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-logo {
+  width: 100px;
+  height: auto;
+}
+
+.search-bar {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
+  width: 60vh;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+  font-weight: bold;
+  margin-left: 60px;
+}
+
+.nav-links li {
+  cursor: pointer;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-right .sign-in-btn {
+  padding: 8px 18px;
+  background-color: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.nav-right .sign-in-btn:hover {
+  background-color: #e55a2d;
+}
+
+/* Hamburger Menu */
+.hamburger {
+  width: 25px;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.hamburger span {
+  display: block;
+  height: 3px;
+  background: #333;
+  border-radius: 2px;
+}
+
+/* Center Content */
+.center-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-now-btn {
+  padding: 14px 28px;
+  font-size: 1.2rem;
+  background-color: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.book-now-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}

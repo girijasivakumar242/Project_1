@@ -1,0 +1,134 @@
+/* Scope everything to .organiser-dashboard only */
+.organiser-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: #f7c5a3;
+  font-family: Arial, sans-serif;
+}
+
+.organiser-dashboard .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.organiser-dashboard .logo-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.organiser-dashboard .logo-section nav a {
+  text-decoration: none;
+  color: #333;
+  margin: 0 10px;
+  font-weight: 500;
+}
+
+.organiser-dashboard .user-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.organiser-dashboard .home-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.organiser-dashboard .form-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+.organiser-dashboard form {
+  background: #fff;
+  padding: 25px 30px; /* Balanced spacing inside form */
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.organiser-dashboard h2 {
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #222;
+}
+
+.organiser-dashboard label {
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.organiser-dashboard input[type="text"],
+.organiser-dashboard input[type="tel"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box; /* Prevent overflow with padding */
+}
+
+.organiser-dashboard input:focus {
+  border-color: #f97316;
+}
+
+.organiser-dashboard .account-section {
+  display: flex;
+  gap: 15px; /* More space between Account Number & IFSC */
+}
+
+.organiser-dashboard .account-section input {
+  flex: 1; /* Equal width */
+}
+
+.organiser-dashboard .verify-btn {
+  width: 100%;
+  background-color: #f97316;
+  color: white;
+  font-size: 15px;
+  padding: 10px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 15px; /* Slightly more breathing space above button */
+}
+
+.organiser-dashboard .verify-btn:disabled {
+  background-color: #fbbf94;
+  cursor: not-allowed;
+}
+
+.organiser-dashboard .message {
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+.organiser-dashboard .form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  width: 100%;
+}

@@ -1,0 +1,110 @@
+/* Page Wrapper */
+.event-launch-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width:220vh;
+  background-color: #ffffff;
+  font-family: "Inter", sans-serif;
+}
+
+/* Header */
+.event-launch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Logo + Nav */
+.event-launch-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.event-launch-logo {
+  height: 40px;
+}
+
+.event-launch-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.event-launch-nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.event-launch-nav a:hover {
+  color: #ff6600;
+}
+
+/* User Info */
+.event-launch-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.event-launch-user-info strong {
+  font-weight: 700;
+}
+
+.event-launch-home-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.event-launch-home-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Main Section */
+.event-launch-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.event-launch-main h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #173b4d;
+}
+
+.event-launch-main p {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Button */
+.event-launch-btn {
+  background-color: #ff6600;
+  color: white;
+  padding: 0.9rem 2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.event-launch-btn:hover {
+  background-color: #e65c00;
+  transform: scale(1.05);
+}

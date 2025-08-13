@@ -1,0 +1,206 @@
+/* Fullscreen blurred background */
+.signin-page {
+  position: fixed; /* overlay on top of everything */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  display: flex;
+  align-items: center; /* vertical center */
+  justify-content: center; /* horizontal center */
+
+  background: linear-gradient(to right, #f8c3a0, #fcd5c0);
+  backdrop-filter: blur(5px);
+
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  z-index: 9999; /* above everything */
+}
+
+/* White modal card */
+.signin-card {
+  background: #ffffff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.signin-title {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  text-align: left;
+}
+
+.form-group label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.forgot-password {
+  font-weight: normal;
+  font-size: 0.85rem;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.form-group input {
+  width: 95%;          /* makes it narrower inside the form */
+  padding: 8px;        /* reduces height */
+  margin-top: 4px;
+  font-size: 0.9rem;   /* slightly smaller text */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Main login button */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #ff6b35;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.login-btn:hover {
+  background-color: #e55a2d;
+  transform: scale(1.03);
+}
+
+/* Social login buttons */
+.social-login {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.social-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* Google button with logo */
+.social-btn.google {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px;
+}
+
+.signup-text {
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+.signup-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.signup-text a:hover {
+  text-decoration: underline;
+}
+
+.message {
+  margin-top: 15px;
+  font-weight: bold;
+}
+.link-text {
+  color: #007bff; /* blue like a link */
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.link-text:hover {
+  color: #0056b3; /* darker blue on hover */
+}
+.radio-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.radio-group label {
+  font-weight: normal;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* Existing styles remain... */
+
+/* Compact card for Sign Up */
+.signin-card.compact {
+  max-width: 320px; /* narrower */
+  padding: 20px 25px; /* less padding */
+}
+
+.signin-card.compact .signin-title {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+}
+
+.signin-card.compact .signin-form {
+  gap: 10px; /* smaller gap between inputs */
+}
+
+.signin-card.compact .form-group input {
+  padding: 8px; /* smaller inputs */
+  font-size: 0.85rem;
+}
+
+.signin-card.compact .login-btn {
+  padding: 8px;
+  font-size: 0.9rem;
+}
+
+.signin-card.compact .social-login {
+  margin-top: 10px;
+}
+
+.signin-card.compact .signup-text {
+  font-size: 0.8rem;
+  margin-top: 12px;
+}
