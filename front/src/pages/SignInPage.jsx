@@ -1,4 +1,3 @@
-// src/pages/SignInPage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/SignInPage.css";

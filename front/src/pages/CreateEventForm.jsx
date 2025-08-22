@@ -1,29 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import "../styles/CreateEventForm.css";
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/bookd-logo.png";
-import { useNavigate } from "react-router-dom";
 
 export default function CreateEventForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     category: "",
-    fromTime: "",
-    toTime: "",
     eventName: "",
     startDate: "",
     endDate: "",
     location: "",
     ticketPrice: "",
     poster: null,
+    seatMap: null,           // added seatMap
   });
 
-  const [locationSuggestions, setLocationSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [timings, setTimings] = useState([{ fromTime: "", toTime: "" }]);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // "success" or "error"
-  const locationRef = useRef(null);
+  const [messageType, setMessageType] = useState("");
+
+  const chennaiLocations = {
+    movies: [
+      "Sathyam Cinemas",
+      "Escape Cinemas",
+      "PVR Skywalk",
+      "AGS Cinemas",
+      "Rohini Silver Screens",
+      "Devi Theatre",
+    ],
+    sports: [
+      "M.A. Chidambaram Stadium",
+      "Jawaharlal Nehru Stadium",
+      "Chennai Hockey Stadium",
+      "SDAT Tennis Stadium",
+    ],
+    concerts: [
+      "YMCA Grounds Nandanam",
+      "Island Grounds",
+      "VGP Grounds",
+      "Chennai Trade Centre",
+    ],
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -31,79 +50,55 @@ export default function CreateEventForm() {
       ...prev,
       [name]: files ? files[0] : value,
     }));
-
-    if (name === "location") {
-      if (value.trim().length > 0) {
-        fetchLocationSuggestions(value);
-        setShowSuggestions(true);
-      } else {
-        setLocationSuggestions([]);
-        setShowSuggestions(false);
-      }
-    }
   };
 
-  const fetchLocationSuggestions = async (query) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:5000/api/districts?query=${encodeURIComponent(query)}`
-      );
-      setLocationSuggestions(response.data || []);
-    } catch (error) {
-      console.error("Error fetching districts:", error);
-      setLocationSuggestions([]);
-    }
+  const handleTimingChange = (index, field, value) => {
+    const newTimings = [...timings];
+    newTimings[index][field] = value;
+    setTimings(newTimings);
   };
 
-  const selectSuggestion = (location) => {
-    setFormData((prev) => ({ ...prev, location }));
-    setShowSuggestions(false);
-  };
+  const addTiming = () => setTimings([...timings, { fromTime: "", toTime: "" }]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (locationRef.current && !locationRef.current.contains(event.target)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const removeTiming = (index) => {
+    const newTimings = timings.filter((_, i) => i !== index);
+    setTimings(newTimings);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const data = new FormData();
+
+      // Append all form fields including files
       Object.keys(formData).forEach((key) => {
-        if (key === "poster" && formData.poster) {
-          data.append(key, formData.poster);
-        } else if (key !== "poster") {
+        if ((key === "poster" || key === "seatMap") && formData[key]) {
+          data.append(key, formData[key]);
+        } else if (formData[key]) {
           data.append(key, formData[key]);
         }
       });
 
+      timings.forEach((t) => data.append("timings", JSON.stringify(t)));
+
       await axios.post("http://localhost:5000/api/v1/events", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
+      navigate("/organiser-events");
       setMessage("Event Created Successfully!");
       setMessageType("success");
 
       setFormData({
         category: "",
-        fromTime: "",
-        toTime: "",
         eventName: "",
         startDate: "",
         endDate: "",
         location: "",
         ticketPrice: "",
         poster: null,
+        seatMap: null,
       });
-      setLocationSuggestions([]);
-      setShowSuggestions(false);
+      setTimings([{ fromTime: "", toTime: "" }]);
     } catch (error) {
       console.error(error);
       setMessage("Error creating event. Please try again.");
@@ -121,19 +116,17 @@ export default function CreateEventForm() {
       <div className="event-card">
         <div className="header-bar">
           <img src={logo} alt="Bookd Logo" className="bookd" />
-          <button className="home-btn" onClick={() => navigate("/")}>
-            🏠
-          </button>
+          <button className="home-btn" onClick={() => navigate("/")}>🏠</button>
         </div>
 
         <div className="header-row">
-         <span 
-  className="back-arrow" 
-  onClick={() => navigate("/create-event-landing")}
-  style={{ cursor: "pointer" }}
->
-  ←
-</span>
+          <span
+            className="back-arrow"
+            onClick={() => navigate("/create-event-landing")}
+            style={{ cursor: "pointer" }}
+          >
+            ←
+          </span>
           <h2>ORGANISE THE EVENT</h2>
         </div>
 
@@ -143,26 +136,12 @@ export default function CreateEventForm() {
           <div className="form-grid">
             <label>
               Event category
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-              >
+              <select name="category" value={formData.category} onChange={handleChange}>
                 <option value="">Select category</option>
-                <option value="Movie">Movie</option>
-                <option value="Sport">Sport</option>
-                <option value="Concert">Concert</option>
+                <option value="movies">Movie</option>
+                <option value="sports">Sport</option>
+                <option value="concerts">Concert</option>
               </select>
-            </label>
-
-            <label className="icon-input">
-              From Time
-              <input
-                type="time"
-                name="fromTime"
-                value={formData.fromTime}
-                onChange={handleChange}
-              />
             </label>
 
             <label>
@@ -171,16 +150,6 @@ export default function CreateEventForm() {
                 type="text"
                 name="eventName"
                 value={formData.eventName}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label className="icon-input">
-              To Time
-              <input
-                type="time"
-                name="toTime"
-                value={formData.toTime}
                 onChange={handleChange}
               />
             </label>
@@ -205,52 +174,23 @@ export default function CreateEventForm() {
               />
             </label>
 
-            <label className="icon-input" ref={locationRef}>
-  Location
-  <div className="location-input-wrapper">
-    <input
-      type="text"
-      name="location"
-      value={formData.location}
-      onChange={handleChange}
-      autoComplete="off"
-      onFocus={() => {
-        if (formData.location.trim().length > 0) {
-          fetchLocationSuggestions(formData.location);
-          setShowSuggestions(true);
-        }
-      }}
-    />
-    <FaMapMarkerAlt
-      className="location-icon"
-      onClick={() => {
-        fetchLocationSuggestions(formData.location || "");
-        setShowSuggestions(true);
-        locationRef.current.querySelector("input").focus();
-      }}
-    />
-
-    {showSuggestions && locationSuggestions.length > 0 && (
-      <div className="suggestions-container">
-        {locationSuggestions.map((loc, index) => (
-          <div
-            key={index}
-            className="suggestion-item"
-            onClick={() => selectSuggestion(loc)}
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            <FaMapMarkerAlt className="suggestion-icon" />
-            <div className="suggestion-text">
-              <strong>{loc}</strong>
-              <span className="suggestion-subtext">Tamil Nadu</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</label>
-
+            <label>
+              Location
+              <select
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                disabled={!formData.category}
+              >
+                <option value="">Select location</option>
+                {formData.category &&
+                  chennaiLocations[formData.category]?.map((loc, index) => (
+                    <option key={index} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+              </select>
+            </label>
 
             <label>
               Ticket Price
@@ -271,7 +211,48 @@ export default function CreateEventForm() {
                 onChange={handleChange}
               />
             </label>
+
+            {/* New seatMap input */}
+            <label className="icon-input file-upload">
+              Seat Map
+              <input
+                type="file"
+                name="seatMap"
+                accept="image/*,application/pdf" // allow images & pdf for seat maps
+                onChange={handleChange}
+              />
+            </label>
           </div>
+
+          <h3>Show Timings</h3>
+          {timings.map((t, index) => (
+            <div key={index} className="timing-row">
+              <label>
+                From Time
+                <input
+                  type="time"
+                  value={t.fromTime}
+                  onChange={(e) => handleTimingChange(index, "fromTime", e.target.value)}
+                />
+              </label>
+              <label>
+                To Time
+                <input
+                  type="time"
+                  value={t.toTime}
+                  onChange={(e) => handleTimingChange(index, "toTime", e.target.value)}
+                />
+              </label>
+              {index > 0 && (
+                <button type="button" onClick={() => removeTiming(index)}>
+                  ❌ Remove
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addTiming} className="add-timing-btn">
+            ➕ Add Another Show
+          </button>
 
           <button type="submit" className="organize-btn">
             ORGANIZE

@@ -4,8 +4,15 @@ import HomePage from "./pages/Home.jsx";
 import SignInPage from "./pages/SignInPage.jsx";
 import OrganiserDashboard from "./pages/OrganiserDashboard.jsx";
 import CreateEventLanding from "./pages/CreateEventLanding.jsx";
-import CreateEventForm from "./pages/CreateEventForm.jsx"; // 📌 Import the new form
+import CreateEventForm from "./pages/CreateEventForm.jsx";
 import AudienceDashboard from "./pages/AudienceDashboard.jsx";
+import CategoryPage from "./pages/CategoryPage.jsx";
+import EventDetails from "./pages/EventDetails.jsx";
+import SeatMap from "./pages/SeatMap"; // adjust the import path
+
+
+ // ✅ Import fixed
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,9 +23,8 @@ function App() {
     const companyVerified = localStorage.getItem("companyVerified") === "true";
     const justLoggedIn = localStorage.getItem("justLoggedIn") === "true";
 
-    if (!token) return; // Not logged in → no redirect
+    if (!token) return;
 
-    // 🚀 Redirect immediately after login
     if (justLoggedIn) {
       if (role === "organiser") {
         navigate(
@@ -30,7 +36,6 @@ function App() {
       return;
     }
 
-    // 🔄 Returning session: only redirect if on wrong page
     if (role === "organiser") {
       if (companyVerified && location.pathname === "/organiser-dashboard") {
         navigate("/create-event-landing", { replace: true });
@@ -47,7 +52,12 @@ function App() {
       <Route path="/organiser-dashboard" element={<OrganiserDashboard />} />
       <Route path="/create-event-landing" element={<CreateEventLanding />} />
       <Route path="/create-event-form" element={<CreateEventForm />} />
-      <Route path="/audience-dashboard" element={<AudienceDashboard />} /> {/* ✅ New route */}
+      <Route path="/audience-dashboard" element={<AudienceDashboard />} />
+      <Route path="/category/:category" element={<CategoryPage />} />
+      <Route path="/event/:id" element={<EventDetails />} /> 
+      <Route path="/seatmap/:eventId/:location" element={<SeatMap />} />
+      
+      {/* ✅ Event detail route */}
     </Routes>
   );
 }

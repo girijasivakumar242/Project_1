@@ -1,0 +1,64 @@
+.category-page {
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+  background-color: #f9d0b5;
+  min-height: 100vh;
+}
+
+.category-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.events-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;   /* more breathing space */
+}
+
+.event-cardy {
+  width: 180px;                    /* slightly slimmer */
+  background: #f8a443;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.event-cardy:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.event-poster {
+  width: 100%;
+  aspect-ratio: 2/ 3;          /* shorter poster → reduces card height */
+  object-fit: cover;
+  border-bottom: 1px solid #eee;
+}
+
+.event-info {
+  padding: 8px;
+}
+
+.event-info h3 {
+  margin: 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.event-info p {
+  margin: 2px 0;
+  font-size: 0.8rem;
+  font-family: "Playfair Display", serif;  /* stylish font */
+  /* font-style: italic;                     extra touch */
+  color: #000000;
+}

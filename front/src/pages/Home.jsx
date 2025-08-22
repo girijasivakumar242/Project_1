@@ -8,45 +8,41 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Top Navbar */}
+      {/* Navbar */}
       <nav className="navbar">
         <div className="nav-left">
           <img src={logo} alt="BOOKD Logo" className="nav-logo" />
-          <input
-            type="text"
-            placeholder="Search for events"
-            className="search-bar"
-          />
           <ul className="nav-links">
-            <li>Movies</li>
-            <li>Concerts</li>
-            <li>Sports</li>
+            <li>About</li>
+            <li>Contact Us</li>
+            <li>Pricing</li>
           </ul>
         </div>
+
         <div className="nav-right">
           <button
-            className="sign-in-btn"
+            className="get-started-btn"
             onClick={() => navigate("/signin")}
           >
-            Sign In
+            Get Started
           </button>
-
-          {/* Hamburger Menu */}
-          <div className="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
         </div>
       </nav>
 
-      {/* Center Content */}
-      <div className="center-content">
+      {/* Hero Section */}
+      <div className="hero-section">
+        <h1>
+          Event Management, <span className="highlight">Simplified</span>
+        </h1>
+        <p>
+          BOOKD’s all-in-one event management platform makes planning easier
+          and elevates the attendee experience.
+        </p>
         <button
-          className="book-now-btn"
-          onClick={() => alert("Book Now clicked")}
+          className="hero-btn"
+          onClick={() => navigate("/signin")}
         >
-          Book Now
+          Get Started
         </button>
       </div>
     </div>
