@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // ✅ added useNavigate
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/EventDetails.css";
 
@@ -20,15 +20,13 @@ function calculateDuration(fromTime, toTime) {
 
 export default function EventDetails() {
   const { id } = useParams();
-  const navigate = useNavigate(); // ✅ initialize useNavigate
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/v1/events/id/${id}`
-        );
+        const res = await axios.get(`http://localhost:5000/api/v1/events/${id}`);
         setEvent(res.data);
       } catch (err) {
         console.error("❌ Error fetching event:", err);
@@ -39,10 +37,13 @@ export default function EventDetails() {
 
   if (!event) return <p className="loading">Loading...</p>;
 
-  // ✅ Group venues by date & location
+  // ✅ Group venues by startDate
   const venuesByDate = {};
   event.venues?.forEach((venue) => {
-    const date = new Date(venue.startDate).toLocaleDateString();
+    const date = venue.startDate
+      ? new Date(venue.startDate).toLocaleDateString()
+      : "No Date";
+
     if (!venuesByDate[date]) venuesByDate[date] = {};
 
     if (!venuesByDate[date][venue.location]) {
@@ -55,18 +56,37 @@ export default function EventDetails() {
       };
     }
 
-    venuesByDate[date][venue.location].timings.push({
-      fromTime: venue.fromTime,
-      toTime: venue.toTime,
-    });
+    // ✅ Case 1: single timing directly on venue
+    if (venue.fromTime && venue.toTime) {
+      venuesByDate[date][venue.location].timings.push({
+        fromTime: venue.fromTime,
+        toTime: venue.toTime,
+        seatMap: venue.seatMap,
+        totalSeats: venue.totalSeats,
+      });
+    }
+
+    // ✅ Case 2: timings array inside venue
+    if (venue.timings && Array.isArray(venue.timings)) {
+      venue.timings.forEach((t) => {
+        venuesByDate[date][venue.location].timings.push({
+          fromTime: t.fromTime,
+          toTime: t.toTime,
+          seatMap: t.seatMap,
+          totalSeats: t.totalSeats,
+        });
+      });
+    }
   });
 
   return (
+    <main className="main-content">
     <div className="event-details-page">
       {/* Header */}
       <div className="event-header">
         <div className="event-info">
           <h1>{event.eventName}</h1>
+          {/* <p className="event-category">📌 {event.category}</p> */}
         </div>
         {event.poster && (
           <img
@@ -89,23 +109,35 @@ export default function EventDetails() {
                 <div className="venue-header">
                   <p className="venue-name">🎭 {venue.location}</p>
                   <p className="venue-dates">
-                    {new Date(venue.startDate).toLocaleDateString()} –{" "}
-                    {new Date(venue.endDate).toLocaleDateString()}
+                    📅 {venue.startDate
+                      ? new Date(venue.startDate).toLocaleDateString()
+                      : "—"}{" "}
+                    →{" "}
+                    {venue.endDate
+                      ? new Date(venue.endDate).toLocaleDateString()
+                      : "—"}
                   </p>
                 </div>
 
                 {/* Timings */}
                 <div className="showtimes">
-                  {venue.timings.map((t, tIdx) => (
-                    <div key={tIdx} className="timing-item">
-                      <button className="showtime-btn">
-                        {t.fromTime} – {t.toTime}
-                      </button>
-                      <span className="duration">
-                        ⏱ {calculateDuration(t.fromTime, t.toTime)}
-                      </span>
-                    </div>
-                  ))}
+                  {venue.timings.length > 0 ? (
+                    venue.timings.map((t, tIdx) => (
+                      <div key={tIdx} className="timing-item">
+                        <button className="showtime-btn">
+                          {t.fromTime} – {t.toTime}
+                        </button>
+                        <span className="duration">
+                          ⏱ {calculateDuration(t.fromTime, t.toTime)}
+                        </span>
+                        {t.totalSeats && (
+                          <span className="seats"> {t.totalSeats} seats</span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="no-timings">No showtimes available</p>
+                  )}
                 </div>
 
                 <p className="ticket-price">🎟 Ticket: ₹{venue.ticketPrice}</p>
@@ -130,5 +162,6 @@ export default function EventDetails() {
         ))}
       </div>
     </div>
+    </main>
   );
 }

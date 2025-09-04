@@ -1,0 +1,184 @@
+.dashboard-container {
+  font-family: "Poppins", sans-serif;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 290vh;
+}
+
+/* Header/Navbar */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 20px 60px;  /* ⬅️ more padding for full-width feel */
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width:192vh;
+  height:40px;
+}
+
+.dashboard-header img.bookd {
+  height: 48px;  /* slightly bigger logo */
+}
+
+/* Middle nav links */
+.dashboard-header nav {
+  display: flex;
+  gap: 50px;   /* ⬅️ big gap between nav items */
+  flex: 1;     /* ⬅️ makes nav expand between logo & greeting */
+  justify-content: end;
+  margin-right: 50px;
+}
+
+.dashboard-header nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  font-size: 1rem;
+}
+
+.dashboard-header nav a:hover {
+  color: #ff6a00;
+}
+
+/* Right side greeting */
+.greeting {
+  font-weight: 600;
+  color: #444;
+  font-size: 1rem;
+}
+
+
+/* Events Section */
+.events-section {
+  margin-top: 705px ;
+  max-width: 800px;
+  padding: 0 20px;
+  position: relative;
+}
+
+.events-section h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.view-summary {
+  position: absolute;
+  right: 20px;
+  top: 0;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #007bff;
+  font-weight: 500;
+}
+
+/* Event list - single column like Figma */
+.event-list {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.event-cardi {
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 20px 16px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.2s ease;
+  width:200vh
+}
+
+.event-cardi:hover {
+  box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+}
+
+.event-cardi h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.event-cardi p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.status-btn {
+  background: #ff6a00;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.status-btn:hover {
+  background: #e55a00;
+}
+
+/* Create Event Section */
+.create-event-promo {
+  text-align: center;
+  margin: 60px auto;
+  max-width: 600px;
+  padding: 40px 20px;
+  border-radius: 12px;
+}
+
+.create-event-promo h2 {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+
+.create-event-promo p {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.create-btn {
+  background: #ff6a00;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.create-btn:hover {
+  background: #e55a00;
+}
+/* Right side wrapper */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0px;  /* space between greeting and home button */
+}
+
+/* Home button style */
+.home-btn {
+
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+
+}
+
+

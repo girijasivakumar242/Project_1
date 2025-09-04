@@ -1,0 +1,66 @@
+.booking-status-container {
+  padding: 20px;
+}
+
+.booking-Name {
+  margin-top: 60px;
+}
+
+.status-card {
+  border: 1px solid #eee;
+  background-color: #fff; /* white like your screenshot */
+  border-radius: 10px;
+  padding: 15px 20px;
+  min-width: 1250px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-details h4 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.status-details p {
+  margin: 2px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.seat-status {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.seat-status div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seat-status span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.booked {
+  color: orangered;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.not-booked {
+  color: orangered;
+  font-weight: bold;
+  font-size: 18px;
+}

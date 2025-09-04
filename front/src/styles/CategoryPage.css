@@ -1,3 +1,8 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  background-color: #f9d0b5 !important; /* enforce same background everywhere */
+}
 .category-page {
   padding: 20px;
   font-family: "Poppins", sans-serif;
@@ -12,53 +17,29 @@
   color: #333;
 }
 
-.events-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;   /* more breathing space */
-}
-
 .event-cardy {
-  width: 180px;                    /* slightly slimmer */
-  background: #f8a443;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: inline-block;     /* keeps poster + name together */
+  margin: 10px;              /* small gap between items */
+  cursor: pointer;
   text-align: center;
-  overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s ease;
 }
 
 .event-cardy:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  transform: scale(1.05);    /* small zoom */
 }
 
 .event-poster {
-  width: 100%;
-  aspect-ratio: 2/ 3;          /* shorter poster → reduces card height */
+  width: 200px;              /* adjust poster size */
+  height: 280px;
   object-fit: cover;
-  border-bottom: 1px solid #eee;
-}
-
-.event-info {
-  padding: 8px;
+  display: block;
+  border-radius: 6px;
 }
 
 .event-info h3 {
-  margin: 4px 0;
+  margin-top: 6px;
   font-size: 1rem;
   font-weight: 600;
   color: #222;
-}
-
-.event-info p {
-  margin: 2px 0;
-  font-size: 0.8rem;
-  font-family: "Playfair Display", serif;  /* stylish font */
-  /* font-style: italic;                     extra touch */
-  color: #000000;
 }

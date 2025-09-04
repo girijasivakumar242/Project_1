@@ -21,7 +21,6 @@ export default function AudienceDashboard() {
 
   return (
     <div className="audience-dashboard">
-      {/* Navbar */}
       <nav className="navbarss">
         <img src={logo} alt="Bookd Logo" className="logo-img" />
         <input

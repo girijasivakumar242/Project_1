@@ -18,6 +18,7 @@
   padding: 15px 15px;
   background-color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 120px;
 }
 
 .logo-img {
@@ -28,7 +29,7 @@
 
 .search-bars {
   flex: 1;
-  max-width: 500px; /* keeps search bar from being huge */
+  min-width: 250px; 
   margin: 0 20px; /* space between logo and nav-links */
   padding: 8px 12px;
   border: 1px solid #ccc;
@@ -50,7 +51,9 @@
 
 /* Section title */
 .section-title {
-  margin: 40px 40px;
+  margin-top: 70px;
+  margin-left:  40px;
+  margin-right: 40px;
   font-size: 20px;
   font-weight: bold;
 }

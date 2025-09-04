@@ -14,7 +14,7 @@ export default function CategoryPage() {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://localhost:5000/api/v1/events/${category.toLowerCase()}`
+          `http://localhost:5000/api/v1/events/category/${category.toLowerCase()}`
         );
         setEvents(res.data);
       } catch (err) {
@@ -39,11 +39,11 @@ export default function CategoryPage() {
       ) : events.length === 0 ? (
         <p>No events found for "{category}"</p>
       ) : (
-        <div className="events-grid">
+        <div>
           {events.map((event) => (
             <div
               key={event._id}
-              className="event-card"
+              className="event-cardy"
               onClick={() => handleEventClick(event._id)}
             >
               {event.poster ? (

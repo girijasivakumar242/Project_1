@@ -32,7 +32,8 @@ export default function SignInPage() {
   };
 
   // ===== LOGIN =====
-  const handleLogin = async (e) => {
+  // ===== LOGIN =====
+const handleLogin = async (e) => {
   e.preventDefault();
   setMessage("");
 
@@ -56,11 +57,17 @@ export default function SignInPage() {
 
     setMessage("Login successful ✅");
 
-    // ✅ Navigate based on role and company verification
+    // ✅ Navigate based on role and organiser status
     if (data.role === "organiser") {
       if (data.companyVerified) {
-        navigate("/create-event-landing");
+        // Verified organiser
+        if (data.hasEvents) {
+          navigate("/dashboard"); // Verified organiser with events
+        } else {
+          navigate("/create-event-landing"); // Verified organiser without events
+        }
       } else {
+        // Not verified organiser
         navigate("/organiser-dashboard");
       }
     } else if (data.role === "audience") {
@@ -72,6 +79,7 @@ export default function SignInPage() {
     setMessage(err.response?.data?.message || "Login failed ❌");
   }
 };
+
 
 
   // ===== SIGN UP =====

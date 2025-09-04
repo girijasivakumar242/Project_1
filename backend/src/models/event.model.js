@@ -1,36 +1,37 @@
 import mongoose from "mongoose";
 
-const venueSchema = new mongoose.Schema({
-  location: { type: String, required: true },
-  fromTime: { type: String, required: true },
-  toTime: { type: String, required: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
-  ticketPrice: { type: Number, required: true },
-});
+const timingSchema = new mongoose.Schema(
+  {
+    fromTime: { type: String, required: true },
+    toTime: { type: String, required: true },
+    totalSeats: { type: Number },
+    seatMap: { type: String },
+  },
+  { _id: true }
+);
+
+const venueSchema = new mongoose.Schema(
+  {
+    location: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    ticketPrice: { type: Number, required: true, min: 1 },
+    timings: { type: [timingSchema], required: true },
+    seatMap: { type: String },
+  },
+  { _id: true }
+);
 
 const eventSchema = new mongoose.Schema(
   {
-    category: { type: String, required: true },
+    organiserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", 
+      required: true,
+    },
     eventName: { type: String, required: true },
-    poster: {
-      type: String,
-      required: [true, "Poster image is required"],
-      lowercase: true,
-      validate: {
-        validator: (v) => /\.(jpg|jpeg|png|gif)$/i.test(v),
-        message: (props) => `${props.value} is not a valid image file`,
-      },
-    },
-    seatMap: {
-      type: String,  // store file path for seat map (can be image/pdf)
-      lowercase: true,
-      validate: {
-        validator: (v) =>
-          !v || /\.(jpg|jpeg|png|gif|pdf)$/i.test(v),  // optional, but if present must be valid
-        message: (props) => `${props.value} is not a valid seat map file`,
-      },
-    },
+    category: { type: String, required: true },
+    poster: { type: String },
     venues: [venueSchema],
   },
   { timestamps: true }

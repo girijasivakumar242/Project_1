@@ -33,14 +33,17 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       }
 
       try {
-        const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const decodedRefresh = jwt.verify(
+          refreshToken,
+          process.env.REFRESH_TOKEN_SECRET
+        );
 
         const user = await User.findById(decodedRefresh._id);
         if (!user || user.refreshToken !== refreshToken) {
           throw new ApiError(401, "Unauthorized: Invalid refresh token");
         }
 
-        // ✅ Only generate a new access token, keep refresh token same
+        // ✅ Generate a new access token
         const newAccessToken = jwt.sign(
           { _id: user._id },
           process.env.ACCESS_TOKEN_SECRET,
@@ -60,7 +63,10 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         req.user = user;
         return next();
       } catch (refreshError) {
-        throw new ApiError(401, "Unauthorized: Refresh token invalid or expired");
+        throw new ApiError(
+          401,
+          "Unauthorized: Refresh token invalid or expired"
+        );
       }
     }
 

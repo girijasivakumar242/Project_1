@@ -15,6 +15,10 @@ import bookingRoutes from "./routes/booking.routes.js";
 
 
 
+
+
+
+
 const app = express();
 app.use(express.static(path.join(process.cwd(), "public")));
 

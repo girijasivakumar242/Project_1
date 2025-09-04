@@ -4,7 +4,9 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { Company } from "../models/company.models.js";
 import { generateAccessAndRefreshToken } from "../utils/token.js";
+import { Event } from "../models/event.model.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const cookieOptions = {
   httpOnly: true,
@@ -90,18 +92,29 @@ const registerOrganiser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
+  // Find user by email
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(401, "Invalid credentials");
 
+  // Check password
   const isMatch = await user.isPasswordCorrect(password);
   if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
   // Check if organiser has a verified company
   let companyVerified = false;
+  let hasEvents = false;
+
   if (user.role === "organiser") {
-    const company = await Company.findOne({ organiserId: user._id }).lean();
-    companyVerified = !!company?.verified;
-  }
+  const company = await Company.findOne({ organiserId: user._id }).lean();
+  companyVerified = !!company?.verified;
+
+  // Only get events for the logged-in organiser
+  const events = await Event.find({
+    organiserId: new mongoose.Types.ObjectId(user._id)
+  }).lean();
+
+  hasEvents = events.length > 0;
+}
 
   // Generate tokens
   const accessToken = jwt.sign(
@@ -109,30 +122,37 @@ const loginUser = asyncHandler(async (req, res) => {
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" }
   );
+
   const refreshToken = jwt.sign(
     { _id: user._id },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" }
   );
 
+  // Save refresh token to user
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  // Return role + companyVerified at top level
+  // Return user info including role, companyVerified, and hasEvents
   res
     .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
     .status(200)
     .json(
-      new ApiResponse(200, {
-        _id: user._id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-        companyVerified,
-        accessToken,
-        refreshToken,
-      }, "Login successful")
+      new ApiResponse(
+        200,
+        {
+          _id: user._id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          companyVerified,
+          hasEvents,
+          accessToken,
+          refreshToken,
+        },
+        "Login successful"
+      )
     );
 });
 
