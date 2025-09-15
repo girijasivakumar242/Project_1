@@ -9,13 +9,14 @@ export default function Remainder() {
   const [reminderTime, setReminderTime] = useState("");
   const [message, setMessage] = useState("");
 
-  // ✅ Fetch bookings for logged-in user (via JWT cookie)
+  // ✅ Fetch bookings for logged-in user
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        const userId = localStorage.getItem("userId"); // 👈 get from storage
         const res = await axios.get(
-          "http://localhost:5000/api/v1/bookings/user", 
-          { withCredentials: true } // 👈 send JWT cookie
+          `http://localhost:5000/api/v1/bookings/user/${userId}`,
+          { withCredentials: true }
         );
 
         console.log("✅ API Response:", res.data);
@@ -42,7 +43,7 @@ export default function Remainder() {
     if (
       reminders.some(
         (r) =>
-          r.bookingId === selectedBooking._id &&
+          r.bookingId === selectedBooking.bookingId &&
           new Date(r.time).getTime() === new Date(reminderTime).getTime()
       )
     ) {
@@ -51,9 +52,9 @@ export default function Remainder() {
     }
 
     const newReminder = {
-      bookingId: selectedBooking._id,
+      bookingId: selectedBooking.bookingId,
       eventName: selectedBooking.eventName,
-      seats: selectedBooking.seats,
+      seats: selectedBooking.seats || [],
       venue: selectedBooking.venue?.location || "N/A",
       timing: selectedBooking.timing
         ? `${selectedBooking.timing.fromTime} - ${selectedBooking.timing.toTime}`
@@ -91,13 +92,16 @@ export default function Remainder() {
       ) : (
         <ul>
           {bookings.map((b) => (
-            <li key={b._id}>
+            <li key={b.bookingId}>
               <span>
-                {b.eventName} – Seats: {b.seats.join(", ")}
+                {b.eventName} – Seats: {b.seats?.join(", ") || "N/A"}
                 {b.venue && ` – 📍 ${b.venue.location}`}
-                {b.timing && ` – ⏰ ${b.timing.fromTime} to ${b.timing.toTime}`}
+                {b.timing &&
+                  ` – ⏰ ${b.timing.fromTime} to ${b.timing.toTime}`}
               </span>
-              <button onClick={() => setSelectedBooking(b)}>Set Reminder</button>
+              <button onClick={() => setSelectedBooking(b)}>
+                Set Reminder
+              </button>
             </li>
           ))}
         </ul>
@@ -118,18 +122,16 @@ export default function Remainder() {
 
       {message && <p className="message">{message}</p>}
 
-      <h3>⏰ Your Reminders</h3>
+      <h3>Your Reminders</h3>
       {reminders.length === 0 ? (
         <p>No reminders set.</p>
       ) : (
         <ul>
-          {reminders.map((r, index) => (
-            <li key={index}>
-              <span>
-                {r.eventName} – Seats: {r.seats.join(", ")} – 📍 {r.venue} – ⏰{" "}
-                {r.timing} – Reminder at: {new Date(r.time).toLocaleString()}
-              </span>
-              <button onClick={() => handleDeleteReminder(index)}>❌ Delete</button>
+          {reminders.map((r, i) => (
+            <li key={`${r.bookingId}-${i}`}>
+              {r.eventName} – {r.seats.join(", ")} – {r.venue} – {r.timing} –{" "}
+              ⏰ {new Date(r.time).toLocaleString()}
+              <button onClick={() => handleDeleteReminder(i)}>❌ Delete</button>
             </li>
           ))}
         </ul>

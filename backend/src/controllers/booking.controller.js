@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 import { Booking } from "../models/booking.model.js";
 import { Event } from "../models/event.model.js";
 
-// ✅ Create or update a booking
 export const createBooking = async (req, res) => {
   try {
-    const { eventId, venueId, timingId, userId, seats } = req.body;
+    let { eventId, venueId, timingId, userId, seats } = req.body;
 
-    if (!eventId || !venueId || !userId || !Array.isArray(seats) || seats.length === 0)
+    // sanitize
+    if (!eventId || !venueId || !userId || !Array.isArray(seats) || seats.length === 0) {
       return res.status(400).json({ error: "Missing or invalid required fields" });
+    }
+    if (!timingId) timingId = undefined;
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: "Event not found" });
@@ -22,7 +24,6 @@ export const createBooking = async (req, res) => {
       if (!timing) return res.status(404).json({ error: "Timing not found for this venue" });
     }
 
-    // ✅ Check seat overlap
     const filter = { eventId, venueId, status: "confirmed" };
     if (timingId) filter.timingId = timingId;
 
@@ -30,89 +31,95 @@ export const createBooking = async (req, res) => {
     if (existingBooking) {
       const allBookedSeats = existingBooking.bookings.flatMap((b) => b.seats);
       const overlap = seats.filter((s) => allBookedSeats.includes(s));
-      if (overlap.length > 0)
+      if (overlap.length > 0) {
         return res.status(400).json({ error: `These seats are already booked: ${overlap.join(", ")}` });
+      }
     }
 
-    // ✅ Add booking
     const updatedBooking = await Booking.findOneAndUpdate(
       filter,
-      {
-        $push: { bookings: { userId, seats } },
-        status: "confirmed",
-      },
+      { $push: { bookings: { userId, seats } }, status: "confirmed" },
       { upsert: true, new: true }
     );
 
-    res.status(201).json({
-      message: "Booking successful",
-      booking: updatedBooking,
-    });
+    res.status(201).json({ message: "Booking successful", booking: updatedBooking });
   } catch (error) {
     console.error("💥 [createBooking] Error:", error);
     res.status(500).json({ error: "Failed to create booking", details: error.message });
   }
 };
 
-// ✅ Get bookings by user (for reminders)
+
+/// ✅ Get bookings by user (for reminders)
 export const getUserBookings = async (req, res) => {
   try {
     const userId = req.params.userId;
 
+    // Find bookings where this user exists in the bookings array
     const bookings = await Booking.find({
       "bookings.userId": userId,
       status: "confirmed",
     }).lean();
 
+    if (!bookings.length) return res.json([]);
+
     const enriched = [];
 
     for (let booking of bookings) {
       const event = await Event.findById(booking.eventId).lean();
-      const venue = event?.venues.find(
+      if (!event) continue;
+
+      // Find venue
+      const venue = event.venues.find(
         (v) => v._id.toString() === booking.venueId.toString()
       );
+
+      // Find timing if exists
       const timing = booking.timingId
         ? venue?.timings.find(
             (t) => t._id.toString() === booking.timingId.toString()
           )
         : null;
 
-      // ✅ Collect all seats for this user
-      const userSeats = booking.bookings
-        .filter((b) => b.userId.toString() === userId)
-        .flatMap((b) => b.seats);
-
-      enriched.push({
-        bookingId: booking._id,
-        eventName: event?.eventName || "Unknown Event",
-        eventDate: event?.date || "TBD",
-        seats: userSeats, // now includes all seats ["A13","D15"]
-        venue: venue
-          ? {
-              location: venue.location,
-              ticketPrice: venue.ticketPrice,
-              seatMap: venue.seatMap,
-            }
-          : null,
-        timing: timing
-          ? {
-              fromTime: timing.fromTime,
-              toTime: timing.toTime,
-              totalSeats: timing.totalSeats,
-            }
-          : null,
-      });
+      // 🔑 Extract only the sub-bookings that belong to this user
+      for (let b of booking.bookings) {
+        if (b.userId.toString() === userId) {
+          enriched.push({
+            bookingId: b._id.toString(), // ✅ unique per sub-booking
+            eventName: event.eventName,
+            eventDate: event.date || "TBD",
+            seats: b.seats,
+            venue: venue
+              ? {
+                  location: venue.location,
+                  ticketPrice: venue.ticketPrice,
+                  seatMap: venue.seatMap,
+                }
+              : null,
+            timing: timing
+              ? {
+                  fromTime: timing.fromTime,
+                  toTime: timing.toTime,
+                  totalSeats: timing.totalSeats,
+                }
+              : null,
+            status: booking.status,
+            createdAt: b.createdAt || booking.createdAt,
+            updatedAt: b.updatedAt || booking.updatedAt,
+          });
+        }
+      }
     }
 
     res.json(enriched);
   } catch (error) {
     console.error("💥 [getUserBookings] Error:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch user bookings", details: error.message });
+    res.status(500).json({
+      error: "Failed to fetch user bookings",
+      details: error.message,
+    });
   }
 };
-
 
 
 // ✅ Get all bookings (Admin)
@@ -136,7 +143,6 @@ export const getAllBookings = async (req, res) => {
         eventId: booking.eventId.toString(),
         venueId: booking.venueId.toString(),
         timingId: booking.timingId?.toString() || null,
-        userId: booking.userId.toString(),
         eventName: event?.eventName,
         venue: venue ? { location: venue.location, ticketPrice: venue.ticketPrice, seatMap: venue.seatMap } : null,
         timing: timing ? { fromTime: timing.fromTime, toTime: timing.toTime, totalSeats: timing.totalSeats } : null,
@@ -187,5 +193,4 @@ export const getEventBookings = async (req, res) => {
     console.error("💥 [getEventBookings] Error:", error);
     res.status(500).json({ error: "Failed to fetch event bookings", details: error.message });
   }
-}; 
-
+};

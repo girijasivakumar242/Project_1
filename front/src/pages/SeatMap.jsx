@@ -41,7 +41,7 @@ export default function SeatMap() {
     )
     ?.reduce(
       (acc, v) => ({
-        _id: acc._id || v._id, // ✅ keep first venueId instead of overwriting
+        _id: acc._id || v._id,
         location: v.location,
         seatMap: v.seatMap || acc.seatMap,
         timings: v.timings || acc.timings,
@@ -59,7 +59,11 @@ export default function SeatMap() {
         const res = await axios.get(
           `http://localhost:5000/api/v1/bookings/${eventId}/${selectedVenue._id}/${timingId}`
         );
-        const booked = res.data.flatMap((booking) => booking.seats);
+
+        // Flatten out booked seats
+        const booked = res.data.flatMap((booking) =>
+          booking.bookings ? booking.bookings.flatMap((b) => b.seats) : []
+        );
         setBookedSeats(booked);
       } catch (err) {
         console.error("Failed to fetch booked seats", err);
@@ -78,7 +82,7 @@ export default function SeatMap() {
     ? `http://localhost:5000${selectedVenue.seatMap}`
     : null;
 
-  // ✅ Generate seats (rows A–Z, 20 seats each)
+  // ✅ Generate seats (A–Z, 20 seats each)
   const seatNumbers = Array.from({ length: 26 }, (_, i) =>
     String.fromCharCode(65 + i)
   ).flatMap((row) =>
@@ -116,44 +120,48 @@ export default function SeatMap() {
     setSelectedSeats(selectedSeats.filter((s) => s !== seat));
   };
 
-  // ✅ Booking
-  const handleBooking = async () => {
-    if (!selectedSeats.length) {
-      alert("Please select at least one seat.");
-      return;
-    }
+// ✅ Booking handler
+const handleBooking = async () => {
+  if (!selectedSeats.length) {
+    alert("Please select at least one seat.");
+    return;
+  }
 
-    const payload = {
-      eventId: event._id,
-      venueId: selectedVenue._id,
-      timingId,
-      userId: "64f2a2e4c23a1f001a5d8bcd", // 🔑 replace later with logged-in user
-      seats: selectedSeats,
-    };
+  // get userId from localStorage (after login you should save it there)
+  const loggedInUserId = localStorage.getItem("userId");
 
-    console.log("📌 Booking Payload:", payload); // ✅ Debug log
-
-    try {
-      const response = await fetch("http://localhost:5000/api/v1/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      console.log("📌 Booking Response:", data);
-
-      if (response.ok) {
-        setBookingMessage("✅ Booking confirmed!");
-        setBookedSeats([...bookedSeats, ...selectedSeats]);
-        setSelectedSeats([]);
-      } else {
-        alert(data.error || "Booking failed");
-      }
-    } catch (err) {
-      console.error("Booking request failed", err);
-    }
+  const payload = {
+    eventId: event._id,            // ✅ use event from state
+    venueId: selectedVenue._id,    // ✅ use selectedVenue
+    timingId: timingId || null,    // ✅ optional
+    userId: loggedInUserId,        // ✅ from localStorage
+    seats: selectedSeats,
   };
+  console.log("📌 Booking Payload:", payload);
+
+
+  try {
+    const response = await fetch("http://localhost:5000/api/v1/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("📌 Booking Response:", data);
+
+    if (response.ok) {
+      setBookingMessage("✅ Booking confirmed!");
+      setBookedSeats([...bookedSeats, ...selectedSeats]);
+      setSelectedSeats([]);
+    } else {
+      alert(data.error || "Booking failed");
+    }
+  } catch (err) {
+    console.error("Booking request failed", err);
+  }
+};
+
 
   return (
     <div className="seatmap-container">
