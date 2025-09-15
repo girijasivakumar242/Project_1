@@ -42,38 +42,102 @@ router.get(
   })
 );
 
-// ✅ GET event by ID
+// ✅ GET event by ID (merged across organisers)
 router.get("/:id", async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ error: "Event not found" });
-    res.status(200).json(event);
+    // Step 1: find base event
+    const baseEvent = await Event.findById(req.params.id).lean();
+    if (!baseEvent) return res.status(404).json({ error: "Event not found" });
+
+    // Step 2: find all events with same name + category
+    const allEvents = await Event.find({
+      eventName: baseEvent.eventName,
+      category: baseEvent.category,
+    }).lean();
+
+    // Step 3: merge venues + organisers
+    let mergedEvent = {
+      _id: baseEvent._id, // keep the requested ID as reference
+      eventName: baseEvent.eventName,
+      category: baseEvent.category,
+      poster: baseEvent.poster,
+      venues: [],
+      organisers: [],
+    };
+
+    allEvents.forEach((ev) => {
+      mergedEvent.venues.push(...(ev.venues || []));
+      mergedEvent.organisers.push(ev.organiserId);
+    });
+
+    res.status(200).json(mergedEvent);
   } catch (error) {
-    console.error("❌ Error fetching event by id:", error);
+    console.error("❌ Error fetching merged event by id:", error);
     res.status(500).json({ error: "Failed to fetch event" });
   }
 });
 
-// ✅ GET all events (public)
+
+// ✅ GET all events (public, merged by eventName + category)
 router.get("/", async (req, res) => {
   try {
     const events = await Event.find().lean();
-    res.status(200).json(events);
+
+    // Group events by eventName + category
+    const groupedEvents = {};
+    events.forEach((event) => {
+      const key = `${event.eventName.toLowerCase()}-${event.category.toLowerCase()}`;
+      if (!groupedEvents[key]) {
+        groupedEvents[key] = {
+          _id: event._id, // pick first id
+          eventName: event.eventName,
+          category: event.category,
+          poster: event.poster,
+          venues: [...event.venues],
+          organisers: [event.organiserId],
+        };
+      } else {
+        groupedEvents[key].venues.push(...event.venues);
+        groupedEvents[key].organisers.push(event.organiserId);
+      }
+    });
+
+    res.status(200).json(Object.values(groupedEvents));
   } catch (error) {
     console.error("❌ Error fetching events:", error);
     res.status(500).json({ error: "Failed to fetch events" });
   }
 });
 
-
-// ✅ GET events by category
+// ✅ GET events by category (merged)
 router.get("/category/:category", async (req, res) => {
   try {
     const { category } = req.params;
     const events = await Event.find({ category: category.toLowerCase() }).lean();
-    if (!events.length)
+
+    if (!events.length) {
       return res.status(404).json({ error: "No events found for this category" });
-    res.status(200).json(events);
+    }
+
+    const groupedEvents = {};
+    events.forEach((event) => {
+      const key = `${event.eventName.toLowerCase()}-${event.category.toLowerCase()}`;
+      if (!groupedEvents[key]) {
+        groupedEvents[key] = {
+          _id: event._id,
+          eventName: event.eventName,
+          category: event.category,
+          poster: event.poster,
+          venues: [...event.venues],
+          organisers: [event.organiserId],
+        };
+      } else {
+        groupedEvents[key].venues.push(...event.venues);
+        groupedEvents[key].organisers.push(event.organiserId);
+      }
+    });
+
+    res.status(200).json(Object.values(groupedEvents));
   } catch (error) {
     console.error("❌ Error fetching events by category:", error);
     res.status(500).json({ error: "Failed to fetch events by category" });
@@ -144,4 +208,3 @@ router.post(
 );
 
 export default router;
-

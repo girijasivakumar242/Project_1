@@ -13,6 +13,17 @@ import EventDetails from "./pages/EventDetails.jsx";
 import SeatMap from "./pages/SeatMap";
 import Dashboard from "./pages/Dashboard.jsx";
 import BookingStatus from "./pages/BookingStatus.jsx";
+import Profile from "./pages/Profile.jsx";
+import Remainder from "./pages/Remainder.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
+import Location from "./pages/Location.jsx";
+import History from "./pages/History.jsx";  
+import Coupons from "./pages/Coupon.jsx";
+import Streaks from "./pages/Streak.jsx";
+import Premium from "./pages/Premium.jsx";
+import Preferences from "./pages/Preferences.jsx";
+import Rewards from "./pages/Rewards.jsx";  
+
 
 function App() {
   const navigate = useNavigate();
@@ -69,9 +80,20 @@ function App() {
       <Route path="/audience-dashboard" element={<AudienceDashboard />} />
       <Route path="/category/:category" element={<CategoryPage />} />
       <Route path="/event/:id" element={<EventDetails />} />
-      <Route path="/seatmap/:eventId/:location" element={<SeatMap />} />
+      <Route path="/seatmap/:eventId/:location/:venueDate" element={<SeatMap />} />
+
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/booking-status/:eventId" element={<BookingStatus />} />
+      <Route path="/profile" element={<Profile />} />
+        <Route path="/remainder" element={<Remainder />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/location" element={<Location />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/coupons" element={<Coupons />} /> 
+        <Route path="/streaks" element={<Streaks />} />
+        <Route path="/premium" element={<Premium />} />
+        <Route path="/preferences" element={<Preferences />} />
+        <Route path="/rewards" element={<Rewards />} /> 
     </Routes>
   );
 }

@@ -7,57 +7,110 @@ export default function BookingStatus() {
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch event details
+        setLoading(true);
+
+        // ✅ Fetch event details
         const eventRes = await axios.get(
           `http://localhost:5000/api/v1/events/${eventId}`
         );
         setEvent(eventRes.data);
 
-        // Fetch all bookings for this event
+        // ✅ Fetch bookings for this event
         const bookingRes = await axios.get(
           `http://localhost:5000/api/v1/bookings/${eventId}`
         );
         setBookings(bookingRes.data);
+
+        console.log("Fetched Bookings:", bookingRes.data);
+        console.log("Fetched Event:", eventRes.data);
       } catch (err) {
-        setError("Failed to fetch booking status");
-        console.error(err);
+        console.error("Booking status fetch error:", err);
+        setError("Failed to fetch booking status. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
+
     fetchData();
   }, [eventId]);
 
-  if (error) return <p>{error}</p>;
-  if (!event) return <p>Loading booking status...</p>;
+  if (loading) return <p className="loading-text">Loading booking status...</p>;
+  if (error) return <p className="error-text">{error}</p>;
+  if (!event) return <p>No event details found.</p>;
 
-  // Group bookings by venue + timing
+  // ✅ Build venue-wise booking status
   const venueStatus = event.venues
     .map((venue) => {
-      return venue.timings.map((timing) => {
-        const bookedSeats = bookings
-          .filter(
-            (b) =>
-              b.venueId === venue._id &&
-              b.timingId === timing._id &&
-              b.status === "confirmed"
-          )
-          .flatMap((b) => b.seats);
+      // Case 1: Venue has timings
+      if (venue.timings && venue.timings.length > 0) {
+        return venue.timings.map((timing) => {
+          const bookedSeats = bookings
+            .filter((b) => {
+              const venueMatch =
+                b.venueId?._id?.toString() === venue._id?.toString() ||
+                b.venueId?.toString() === venue._id?.toString();
 
-        const totalSeats = venue.totalSeats || 135; // fallback
-        const bookedCount = bookedSeats.length;
-        const availableCount = totalSeats - bookedCount;
+              const timingMatch =
+                b.timingId === null ||
+                b.timingId?._id?.toString() === timing._id?.toString() ||
+                b.timingId?.toString() === timing._id?.toString();
 
-        return {
+              const statusMatch = b.status?.toLowerCase() === "confirmed";
+
+              return venueMatch && timingMatch && statusMatch;
+            })
+            .flatMap((b) =>
+              Array.isArray(b.seats) ? b.seats : b.seat ? [b.seat] : []
+            );
+
+          const bookedCount = bookedSeats.length;
+          const totalSeats = timing.totalSeats || venue.totalSeats || 135;
+          const availableCount = Math.max(totalSeats - bookedCount, 0);
+
+          return {
+            venue,
+            timing,
+            bookedCount,
+            availableCount,
+            totalSeats,
+          };
+        });
+      }
+
+      // Case 2: Venue without timings
+      const bookedSeats = bookings
+        .filter((b) => {
+          const venueMatch =
+            b.venueId?._id?.toString() === venue._id?.toString() ||
+            b.venueId?.toString() === venue._id?.toString();
+
+          const statusMatch = b.status?.toLowerCase() === "confirmed";
+
+          return venueMatch && !b.timingId && statusMatch;
+        })
+        .flatMap((b) =>
+          Array.isArray(b.seats) ? b.seats : b.seat ? [b.seat] : []
+        );
+
+      const bookedCount = bookedSeats.length;
+      const totalSeats = venue.totalSeats || 135;
+      const availableCount = Math.max(totalSeats - bookedCount, 0);
+
+      return [
+        {
           venue,
-          timing,
+          timing: null,
           bookedCount,
           availableCount,
-        };
-      });
+          totalSeats,
+        },
+      ];
     })
     .flat();
 
@@ -67,27 +120,36 @@ export default function BookingStatus() {
 
       {venueStatus.map((status, idx) => (
         <div key={idx} className="status-card">
-          {/* Left: Venue details */}
+          {/* ✅ Venue Info */}
           <div className="status-details">
             <h4>{status.venue.location}</h4>
-            <p>
-              {status.timing.fromTime} – {status.timing.toTime}
-            </p>
+            {status.timing ? (
+              <p>
+                {status.timing.fromTime} – {status.timing.toTime}
+              </p>
+            ) : (
+              <p>No specific timing</p>
+            )}
+            <p className="total-seats">Total Seats: {status.totalSeats}</p>
           </div>
 
-          {/* Right: Seat info */}
+          {/* ✅ Seat Booking Info */}
           <div className="seat-status">
             <div>
-              <span>seats booked</span>
+              <span>Seats Booked:</span>
               <span className="booked">{status.bookedCount}</span>
             </div>
             <div>
-              <span>seats Not booked</span>
+              <span>Seats Available:</span>
               <span className="not-booked">{status.availableCount}</span>
             </div>
           </div>
         </div>
       ))}
+
+      {venueStatus.length === 0 && (
+        <p className="no-bookings">No booking data available yet.</p>
+      )}
     </div>
   );
 }

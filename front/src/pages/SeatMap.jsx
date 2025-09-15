@@ -4,7 +4,8 @@ import axios from "axios";
 import "../styles/SeatMap.css";
 
 export default function SeatMap() {
-  const { eventId, location } = useParams();
+  const { eventId, location, venueDate, timingId } = useParams();
+
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -12,7 +13,6 @@ export default function SeatMap() {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
   const [bookingMessage, setBookingMessage] = useState("");
-  const [selectedTiming, setSelectedTiming] = useState("");
 
   // ✅ Fetch event details
   useEffect(() => {
@@ -21,7 +21,6 @@ export default function SeatMap() {
         const res = await axios.get(
           `http://localhost:5000/api/v1/events/${eventId}`
         );
-        console.log("Event API response:", res.data);
         setEvent(res.data);
       } catch (err) {
         setError("Failed to fetch event details");
@@ -32,29 +31,33 @@ export default function SeatMap() {
     fetchEvent();
   }, [eventId]);
 
-  // ✅ Merge all venues with the same location
+  // ✅ Merge all venues with same location & date
   const mergedVenue = event?.venues
-    ?.filter((v) => v.location === decodeURIComponent(location))
+    ?.filter(
+      (v) =>
+        v.location === decodeURIComponent(location) &&
+        new Date(v.startDate).toLocaleDateString() ===
+          decodeURIComponent(venueDate)
+    )
     ?.reduce(
       (acc, v) => ({
-        ...acc,
-        _id: v._id, // keep one id (needed for booking payload)
+        _id: acc._id || v._id, // ✅ keep first venueId instead of overwriting
         location: v.location,
         seatMap: v.seatMap || acc.seatMap,
-        timings: [...(acc.timings || []), ...v.timings],
+        timings: v.timings || acc.timings,
       }),
       {}
     );
 
   const selectedVenue = mergedVenue;
 
-  // ✅ Fetch booked seats whenever timing or venue changes
+  // ✅ Fetch booked seats
   useEffect(() => {
     async function fetchBookedSeats() {
-      if (!selectedTiming || !selectedVenue?._id) return;
+      if (!timingId || !selectedVenue?._id) return;
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/v1/bookings/${eventId}/${selectedVenue._id}/${selectedTiming}`
+          `http://localhost:5000/api/v1/bookings/${eventId}/${selectedVenue._id}/${timingId}`
         );
         const booked = res.data.flatMap((booking) => booking.seats);
         setBookedSeats(booked);
@@ -63,7 +66,7 @@ export default function SeatMap() {
       }
     }
     fetchBookedSeats();
-  }, [eventId, selectedTiming, selectedVenue?._id]);
+  }, [eventId, timingId, selectedVenue?._id]);
 
   if (loading) return <p>Loading seat map...</p>;
   if (error) return <p>{error}</p>;
@@ -82,7 +85,7 @@ export default function SeatMap() {
     Array.from({ length: 20 }, (_, j) => `${row}${j + 1}`)
   );
 
-  // ✅ Filter seats by search
+  // ✅ Filter seats
   const filteredSeats = seatNumbers.filter((seat) => {
     if (!search) return true;
     const searchUpper = search.toUpperCase();
@@ -119,22 +122,18 @@ export default function SeatMap() {
       alert("Please select at least one seat.");
       return;
     }
-    if (!selectedTiming) {
-      alert("Please select a timing.");
-      return;
-    }
+
+    const payload = {
+      eventId: event._id,
+      venueId: selectedVenue._id,
+      timingId,
+      userId: "64f2a2e4c23a1f001a5d8bcd", // 🔑 replace later with logged-in user
+      seats: selectedSeats,
+    };
+
+    console.log("📌 Booking Payload:", payload); // ✅ Debug log
 
     try {
-      const payload = {
-        eventId: event._id,
-        venueId: selectedVenue._id,
-        timingId: selectedTiming,
-        userId: "64f2a2e4c23a1f001a5d8bcd", // 🔑 replace with logged-in user
-        seats: selectedSeats,
-      };
-
-      console.log("Sending booking payload:", payload);
-
       const response = await fetch("http://localhost:5000/api/v1/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -142,13 +141,13 @@ export default function SeatMap() {
       });
 
       const data = await response.json();
+      console.log("📌 Booking Response:", data);
+
       if (response.ok) {
-        console.log("Booking successful:", data);
         setBookingMessage("✅ Booking confirmed!");
         setBookedSeats([...bookedSeats, ...selectedSeats]);
         setSelectedSeats([]);
       } else {
-        console.error("Error booking seats", data);
         alert(data.error || "Booking failed");
       }
     } catch (err) {
@@ -160,6 +159,7 @@ export default function SeatMap() {
     <div className="seatmap-container">
       <h2>{event.eventName}</h2>
       <p>Location: {decodeURIComponent(location)}</p>
+      <p>Date: {decodeURIComponent(venueDate)}</p>
 
       <div className="seatmap-layout">
         {/* Seat Map */}
@@ -179,24 +179,6 @@ export default function SeatMap() {
         {/* Seat Selection */}
         <div className="seatmap-card">
           <h3 className="text-lg font-bold mb-2">Choose Your Seats</h3>
-
-          {/* ✅ Timing selection */}
-          {selectedVenue.timings?.length > 0 && (
-            <div className="mb-3">
-              <label className="block mb-1">Select Timing:</label>
-              <select
-                value={selectedTiming}
-                onChange={(e) => setSelectedTiming(e.target.value)}
-              >
-                <option value="">-- Choose a timing --</option>
-                {selectedVenue.timings.map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.fromTime} - {t.toTime}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {/* Search */}
           <input

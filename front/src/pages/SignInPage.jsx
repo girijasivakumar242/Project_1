@@ -53,7 +53,21 @@ const handleLogin = async (e) => {
       localStorage.setItem("companyVerified", data.companyVerified);
       localStorage.setItem("username", data.username);
       localStorage.setItem("userId", data._id);
+     localStorage.setItem(
+  "loggedInUserEmail",
+  data?.email ? data.email : formData.email
+);
+
+
     }
+    setFormData({
+  fullname: "",
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  role: "audience",
+});
 
     setMessage("Login successful ✅");
 
@@ -116,7 +130,20 @@ const handleLogin = async (e) => {
         localStorage.setItem("role", data.role);
         localStorage.setItem("companyVerified", data.companyVerified);
         localStorage.setItem("username", data.username);
+        localStorage.setItem(
+  "loggedInUserEmail",
+  data?.email ? data.email : formData.email
+);
+
       }
+      setFormData({
+  fullname: "",
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  role: "audience",
+});
 
       setMessage("Account created 🎉");
 

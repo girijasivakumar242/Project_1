@@ -48,6 +48,7 @@
   border-radius: 20px;
   cursor: pointer;
   font-weight: bold;
+  margin-right: 70px;
 }
 
 .nav-right .get-started-btn:hover {

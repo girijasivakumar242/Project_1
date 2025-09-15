@@ -31,8 +31,10 @@ export const createEvent = async (req, res) => {
     }));
 
     const posterPath = req.files?.poster
-      ? `/uploads/${req.files.poster[0].filename}`
-      : `/uploads/${req.file.filename}`;
+  ? `/uploads/${req.files.poster[0].filename}`
+  : req.file
+  ? `/uploads/${req.file.filename}`
+  : event?.poster; // 👈 use old poster if event exists
 
     const seatMapPath = req.files?.seatMap
       ? `/uploads/${req.files.seatMap[0].filename}`
@@ -40,7 +42,11 @@ export const createEvent = async (req, res) => {
 
     const normalizedCategory = category?.trim().toLowerCase();
 
-    let event = await Event.findOne({ eventName, category: normalizedCategory });
+    let event = await Event.findOne({
+  eventName: { $regex: new RegExp(`^${eventName.trim()}$`, "i") }, 
+  category: normalizedCategory,
+});
+
 
     const venueObj = {
       location,
