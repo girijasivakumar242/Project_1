@@ -116,7 +116,7 @@ const handleSubmit = async (e) => {
     }
 
     // ✅ API call
-    const res = await axios.post("http://localhost:5000/api/v1/events", data, {
+    const res = await axios.post("http://localhost:5000/api/v1/organiser-events", data, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",

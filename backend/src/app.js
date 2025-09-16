@@ -7,7 +7,7 @@ import googleAuthRouter from "./routes/google.routes.js";
 import healthcheckRouter from "./routes/healthcheck.routes.js";
 import userRouter from "./routes/user.routes.js";
 import companyRouter from "./routes/company.routes.js";
-import eventRouter from "./routes/event.routes.js";
+import eventOrganiserRouter from "./routes/eventOrganiser.routes.js";
 
 import eventRoute from "./routes/event.route.js";
 import { errorHandler } from "./middlewares/error.middlewares.js";
@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
 // Routes
-app.use("/api/v1/events", eventRouter);
+app.use("/api/v1/organiser-events", eventOrganiserRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/auth", googleAuthRouter);
