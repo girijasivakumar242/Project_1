@@ -55,7 +55,6 @@ export const getUserBookings = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Find bookings where this user exists in the bookings array
     const bookings = await Booking.find({
       "bookings.userId": userId,
       status: "confirmed",
@@ -69,40 +68,51 @@ export const getUserBookings = async (req, res) => {
       const event = await Event.findById(booking.eventId).lean();
       if (!event) continue;
 
-      // Find venue
       const venue = event.venues.find(
         (v) => v._id.toString() === booking.venueId.toString()
       );
+      if (!venue) continue;
 
-      // Find timing if exists
-      const timing = booking.timingId
-        ? venue?.timings.find(
-            (t) => t._id.toString() === booking.timingId.toString()
-          )
-        : null;
+      // ✅ Collect all timings for this venue
+      let timings = [];
 
-      // 🔑 Extract only the sub-bookings that belong to this user
+      // Single timing on venue
+      if (venue.fromTime && venue.toTime) {
+        timings.push({
+          fromTime: venue.fromTime,
+          toTime: venue.toTime,
+          totalSeats: venue.totalSeats || null,
+          seatMap: venue.seatMap || null,
+        });
+      }
+
+      // Multiple timings array
+      if (venue.timings && Array.isArray(venue.timings)) {
+        venue.timings.forEach((t) => {
+          timings.push({
+            fromTime: t.fromTime,
+            toTime: t.toTime,
+            totalSeats: t.totalSeats || null,
+            seatMap: t.seatMap || null,
+          });
+        });
+      }
+
+      // Only include sub-bookings for this user
       for (let b of booking.bookings) {
         if (b.userId.toString() === userId) {
           enriched.push({
-            bookingId: b._id.toString(), // ✅ unique per sub-booking
+            bookingId: b._id.toString(),
             eventName: event.eventName,
-            eventDate: event.date || "TBD",
+            eventDate: venue.startDate,
             seats: b.seats,
-            venue: venue
-              ? {
-                  location: venue.location,
-                  ticketPrice: venue.ticketPrice,
-                  seatMap: venue.seatMap,
-                }
-              : null,
-            timing: timing
-              ? {
-                  fromTime: timing.fromTime,
-                  toTime: timing.toTime,
-                  totalSeats: timing.totalSeats,
-                }
-              : null,
+            venue: {
+              _id: venue._id,
+              location: venue.location,
+              ticketPrice: venue.ticketPrice,
+              seatMap: venue.seatMap,
+            },
+            timings, // ✅ include all timings here
             status: booking.status,
             createdAt: b.createdAt || booking.createdAt,
             updatedAt: b.updatedAt || booking.updatedAt,
@@ -120,6 +130,10 @@ export const getUserBookings = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 
 // ✅ Get all bookings (Admin)
