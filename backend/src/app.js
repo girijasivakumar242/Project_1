@@ -12,7 +12,7 @@ import eventOrganiserRouter from "./routes/eventOrganiser.routes.js";
 import eventRoute from "./routes/event.route.js";
 import { errorHandler } from "./middlewares/error.middlewares.js";
 import bookingRoutes from "./routes/booking.routes.js";
-
+import wishlistRoutes from "./routes/wishlist.routes.js";
 
 
 
@@ -46,6 +46,7 @@ app.use("/api/v1/auth", googleAuthRouter);
 app.use("/api/v1/companies", companyRouter);
 app.use("/api/v1/events", eventRoute);
 app.use("/api/v1/bookings", bookingRoutes);
+app.use("/api/v1/wishlist", wishlistRoutes);
 
 
 // Global error handler

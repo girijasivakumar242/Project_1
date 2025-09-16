@@ -2,7 +2,8 @@
 .audience-dashboard {
   min-height: 100vh;
   font-family: Arial, sans-serif;
-  padding-top: 90px; /* height of navbar + some spacing */
+  padding-top: 90px; 
+  margin-top: 150px;/* height of navbar + some spacing */
 }
 
 /* Navbar */
@@ -194,4 +195,24 @@
 
 .edit-profile-btn-navbar:hover {
   background: #e55a00;
+}
+
+.event-poster-wrapper {
+  position: relative;
+}
+
+.wishlist-icon {
+  cursor: pointer;
+  color: #fff;            /* default white */
+  font-size: 1.5rem;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.wishlist-icon.active {
+  color: #ff4d6d !important;  /* pink when clicked */
+}
+
+.wishlist-icon:hover {
+  color: #ff4d6d;             /* pink on hover */
+  transform: scale(1.2);
 }
