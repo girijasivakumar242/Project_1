@@ -3,7 +3,7 @@
   min-height: 100vh;
   font-family: Arial, sans-serif;
   padding-top: 90px; 
-  margin-top: 150px;/* height of navbar + some spacing */
+  margin-top: 50px;/* height of navbar + some spacing */
 }
 
 /* Navbar */
@@ -53,7 +53,7 @@
 /* Section title */
 .section-title {
   margin-top: 70px;
-  margin-left: 40px;
+  margin-left: 0px;
   margin-right: 40px;
   font-size: 20px;
   font-weight: bold;
@@ -210,6 +210,11 @@
 
 .wishlist-icon.active {
   color: #ff4d6d !important;  /* pink when clicked */
+}
+.event-title {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between text and heart */
 }
 
 .wishlist-icon:hover {

@@ -215,17 +215,20 @@ export default function AudienceDashboard() {
                   onClick={() => handleEventClick(event._id)}
                 />
                 <div className="event-info">
-  <h3>{event.eventName}</h3>
-  <FaHeart
-    className={`wishlist-icon ${wishlist.includes(event._id) ? "active" : ""}`}
-    onClick={(e) => {
-      e.stopPropagation();  // prevent parent click
-      handleWishlist(event._id);
-    }}
-  />
+  <h3 className="event-title">
+    {event.eventName}
+    <FaHeart
+      className={`wishlist-icon ${wishlist.includes(event._id) ? "active" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation(); // prevent parent click
+        handleWishlist(event._id);
+      }}
+    />
+  </h3>
 </div>
+
               </div>
-              <h3>{event.eventName}</h3>
+
             </div>
           ))}
         </div>
