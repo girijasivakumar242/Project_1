@@ -8,27 +8,31 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("accessToken");
+ useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("accessToken");
 
-        const res = await axios.get(
-          `http://localhost:5000/api/v1/events/organiser/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        setEvents(res.data.data || []);
-      } catch (err) {
-        console.error("Error fetching organiser events:", err);
+      if (!userId || !token) {
+        console.warn("User not logged in or missing token");
+        return;
       }
-    };
 
-    fetchEvents();
-  }, []);
+      const res = await axios.get(
+        `http://localhost:5000/api/v1/events/organiser/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Events fetched from backend:", res.data.data);
+      setEvents(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching organiser events:", err.response || err);
+    }
+  };
+
+  fetchEvents();
+}, []);
 
   return (
     <div className="dashboard-container">

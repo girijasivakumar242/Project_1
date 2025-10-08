@@ -50,7 +50,6 @@ export const createBooking = async (req, res) => {
 };
 
 
-/// ✅ Get bookings by user (for reminders)
 export const getUserBookings = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -66,27 +65,22 @@ export const getUserBookings = async (req, res) => {
 
     for (let booking of bookings) {
       const event = await Event.findById(booking.eventId).lean();
-      if (!event) continue;
+      if (!event || !event.venues) continue;
 
-      const venue = event.venues.find(
-        (v) => v._id.toString() === booking.venueId.toString()
-      );
+      // ✅ SAFER venue lookup
+      let venue = null;
+      if (booking.venueId) {
+        venue = event.venues.find(
+          (v) =>
+            v?._id &&
+            booking.venueId &&
+            v._id.toString() === booking.venueId.toString()
+        );
+      }
       if (!venue) continue;
 
-      // ✅ Collect all timings for this venue
+      // ✅ Collect timings
       let timings = [];
-
-      // Single timing on venue
-      if (venue.fromTime && venue.toTime) {
-        timings.push({
-          fromTime: venue.fromTime,
-          toTime: venue.toTime,
-          totalSeats: venue.totalSeats || null,
-          seatMap: venue.seatMap || null,
-        });
-      }
-
-      // Multiple timings array
       if (venue.timings && Array.isArray(venue.timings)) {
         venue.timings.forEach((t) => {
           timings.push({
@@ -98,11 +92,11 @@ export const getUserBookings = async (req, res) => {
         });
       }
 
-      // Only include sub-bookings for this user
+      // ✅ Only include this user’s sub-bookings
       for (let b of booking.bookings) {
-        if (b.userId.toString() === userId) {
+        if (b.userId?.toString() === userId) {
           enriched.push({
-            bookingId: b._id.toString(),
+            bookingId: b._id?.toString(),
             eventName: event.eventName,
             eventDate: venue.startDate,
             seats: b.seats,
@@ -112,7 +106,7 @@ export const getUserBookings = async (req, res) => {
               ticketPrice: venue.ticketPrice,
               seatMap: venue.seatMap,
             },
-            timings, // ✅ include all timings here
+            timings,
             status: booking.status,
             createdAt: b.createdAt || booking.createdAt,
             updatedAt: b.updatedAt || booking.updatedAt,

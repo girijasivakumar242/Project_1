@@ -73,65 +73,73 @@ export default function CreateEventForm() {
       timings: prev.timings.filter((_, i) => i !== index),
     }));
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // 🚨 Basic validation
-  if (!venue.location || !venue.startDate || !venue.endDate) {
-    alert("Please fill location, start date, and end date");
-    return;
-  }
-
-  try {
-    const data = new FormData();
-    if (formData.poster) data.append("poster", formData.poster);
-    if (formData.seatMap) data.append("seatMap", formData.seatMap);
-    data.append("category", formData.category);
-    data.append("eventName", formData.eventName);
-
-    // ✅ Clean timings
-    const cleanedTimings = venue.timings.filter(
-      (t) => t.fromTime && t.toTime && t.totalSeats
-    );
-
-    const venueData = {
-      location: venue.location,
-      startDate: venue.startDate,
-      endDate: venue.endDate,
-      ticketPrice: Number(venue.ticketPrice),
-      timings: cleanedTimings.map((t) => ({
-        fromTime: t.fromTime,
-        toTime: t.toTime,
-        totalSeats: Number(t.totalSeats),
-      })),
-    };
-
-    data.append("venues", JSON.stringify([venueData]));
-
-    // ✅ get token
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      console.error("No token found. Please login again.");
+    if (!venue.location || !venue.startDate || !venue.endDate) {
+      alert("Please fill location, start date, and end date");
       return;
     }
 
-    // ✅ API call
-    const res = await axios.post("http://localhost:5000/api/v1/organiser-events", data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    try {
+      const data = new FormData();
 
-    console.log("Event created:", res.data);
-    navigate("/dashboard");
-  } catch (error) {
-    console.error(error.response?.data || error);
-    alert(error.response?.data?.error || "Error creating event");
-  }
-};
+      // ✅ Append organiserId from localStorage
+      const organiserId = localStorage.getItem("userId");
+      const token = localStorage.getItem("accessToken");
 
+      if (!organiserId || !token) {
+        alert("Session expired. Please log in again.");
+        navigate("/signin");
+        return;
+      }
 
+      data.append("organiserId", organiserId);
+      data.append("category", formData.category);
+      data.append("eventName", formData.eventName);
+
+      if (formData.poster) data.append("poster", formData.poster);
+      if (formData.seatMap) data.append("seatMap", formData.seatMap);
+
+      // ✅ Clean timings
+      const cleanedTimings = venue.timings.filter(
+        (t) => t.fromTime && t.toTime && t.totalSeats
+      );
+
+      const venueData = {
+        location: venue.location,
+        startDate: venue.startDate,
+        endDate: venue.endDate,
+        ticketPrice: Number(venue.ticketPrice),
+        timings: cleanedTimings.map((t) => ({
+          fromTime: t.fromTime,
+          toTime: t.toTime,
+          totalSeats: Number(t.totalSeats),
+        })),
+      };
+
+      data.append("venues", JSON.stringify([venueData]));
+
+      // ✅ API call
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/events",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("✅ Event created successfully:", res.data);
+      alert("Event created successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("❌ Error creating event:", error.response?.data || error);
+      alert(error.response?.data?.error || "Error creating event");
+    }
+  };
 
   return (
     <div className="create-event-container">
@@ -166,6 +174,7 @@ const handleSubmit = async (e) => {
               name="eventName"
               value={formData.eventName}
               onChange={handleChange}
+              required
             />
           </label>
 
@@ -176,6 +185,7 @@ const handleSubmit = async (e) => {
               value={venue.location}
               onChange={handleVenueChange}
               disabled={!formData.category}
+              required
             >
               <option value="">Select location</option>
               {formData.category &&
@@ -187,7 +197,6 @@ const handleSubmit = async (e) => {
             </select>
           </label>
 
-          {/* ✅ Start Date */}
           <label>
             Start Date
             <input
@@ -195,10 +204,10 @@ const handleSubmit = async (e) => {
               name="startDate"
               value={venue.startDate}
               onChange={handleVenueChange}
+              required
             />
           </label>
 
-          {/* ✅ End Date */}
           <label>
             End Date
             <input
@@ -206,6 +215,7 @@ const handleSubmit = async (e) => {
               name="endDate"
               value={venue.endDate}
               onChange={handleVenueChange}
+              required
             />
           </label>
 
@@ -217,6 +227,7 @@ const handleSubmit = async (e) => {
               value={venue.ticketPrice}
               onChange={handleVenueChange}
               min="1"
+              required
             />
           </label>
 
@@ -249,6 +260,7 @@ const handleSubmit = async (e) => {
                 onChange={(e) =>
                   handleTimingChange(i, "fromTime", e.target.value)
                 }
+                required
               />
               <input
                 type="time"
@@ -256,6 +268,7 @@ const handleSubmit = async (e) => {
                 onChange={(e) =>
                   handleTimingChange(i, "toTime", e.target.value)
                 }
+                required
               />
               <input
                 type="number"
@@ -265,6 +278,7 @@ const handleSubmit = async (e) => {
                   handleTimingChange(i, "totalSeats", e.target.value)
                 }
                 min="1"
+                required
               />
               {i > 0 && (
                 <button type="button" onClick={() => removeTiming(i)}>
@@ -283,5 +297,3 @@ const handleSubmit = async (e) => {
     </div>
   );
 }
-
-
