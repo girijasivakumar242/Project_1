@@ -29,6 +29,7 @@ const userSchema = new Schema(
       type: String,
       enum: ["audience", "organiser"],
       required: true,
+      default:"audience",
     },
     profile: {
       bio: { type: String, default: "" },

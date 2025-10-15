@@ -14,23 +14,20 @@ body {
   font-family: "Poppins", sans-serif;
 }
 
-/* Header */
-/* Event header */
 .event-header {
   display: flex;
-  justify-content: space-between; /* pushes left info & poster apart */
+  justify-content: space-between; 
   align-items: flex-start;
   margin-bottom: 30px;
   width: 100%;
 }
 
-/* Poster at extreme right */
 .event-posters {
   width: 200px;
   height: auto;
   object-fit: cover;
   border-radius: 10px;
-  margin-left: 95%;   /* pushes it all the way right */
+  margin-left: 95%;   
 }
 
 
