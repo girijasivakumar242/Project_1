@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { loadStripe } from "@stripe/stripe-js";
 import "../styles/SeatMap.css";
-import "../styles/PaymentPopup.css"; // 👈 Popup CSS file
+import "../styles/PaymentPopup.css";
 
 export default function SeatMap() {
-  const { eventId, location, venueDate, timingId, ticketPrice } = useParams(); // ✅ Added ticketPrice
+  const { eventId, location, venueDate, timingId, ticketPrice } = useParams();
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,9 +14,11 @@ export default function SeatMap() {
   const [search, setSearch] = useState("");
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
-  const [showPopup, setShowPopup] = useState(false); // 👈 Popup state
+  const [showPopup, setShowPopup] = useState(false);
+  const [stripe, setStripe] = useState(null);
+  const [stripeReady, setStripeReady] = useState(false); // ✅ Track Stripe readiness
 
-  // ✅ Fetch event details
+  // Fetch event details
   useEffect(() => {
     async function fetchEvent() {
       try {
@@ -30,7 +33,7 @@ export default function SeatMap() {
     fetchEvent();
   }, [eventId]);
 
-  // ✅ Merge venues by location & date
+  // Merge venue timings
   const mergedVenue = event?.venues
     ?.filter(
       (v) =>
@@ -62,7 +65,7 @@ export default function SeatMap() {
 
   const selectedVenue = mergedVenue;
 
-  // ✅ Fetch booked seats
+  // Fetch booked seats
   useEffect(() => {
     async function fetchBookedSeats() {
       if (!timingId || !selectedVenue?._id) return;
@@ -81,35 +84,47 @@ export default function SeatMap() {
     fetchBookedSeats();
   }, [eventId, timingId, selectedVenue?._id]);
 
+  // Fetch Stripe publishable key from backend
+  useEffect(() => {
+    async function fetchStripeKey() {
+      try {
+        const res = await axios.get("http://localhost:5000/api/payments/stripe-key");
+        if (res.data.publishableKey) {
+          const stripeInstance = await loadStripe(res.data.publishableKey);
+          setStripe(stripeInstance);
+          setStripeReady(true); // ✅ Stripe is now ready
+        } else {
+          console.error("Stripe publishable key not received from backend");
+        }
+      } catch (err) {
+        console.error("Failed to fetch Stripe key", err);
+      }
+    }
+    fetchStripeKey();
+  }, []);
+
   if (loading) return <p>Loading seat map...</p>;
   if (error) return <p>{error}</p>;
   if (!event) return <p>No event found</p>;
   if (!selectedVenue) return <p>No venue found for this location.</p>;
 
-  // ✅ Seat map image
   const seatMapUrl = selectedVenue.seatMap ? `http://localhost:5000${selectedVenue.seatMap}` : null;
-
-  // ✅ Get selected timing
   const selectedTiming = selectedVenue.timings?.find((t) => t._id === timingId);
-
-  // ✅ Determine ticket price (from URL or timing)
   const effectiveTicketPrice = parseFloat(ticketPrice) || selectedTiming?.ticketPrice || 0;
 
-  // ✅ Generate seats (A–Z, 20 seats each)
+  // Generate seat numbers
   const seatNumbers = Array.from({ length: 26 }, (_, i) =>
     String.fromCharCode(65 + i)
   ).flatMap((row) =>
     Array.from({ length: 20 }, (_, j) => `${row}${j + 1}`)
   );
 
-  // ✅ Filter seats
   const filteredSeats = seatNumbers.filter((seat) => {
     if (!search) return true;
     const searchUpper = search.toUpperCase();
     return seat.startsWith(searchUpper);
   });
 
-  // ✅ Group seats by row
   const groupedSeats = filteredSeats.reduce((acc, seat) => {
     const row = seat.charAt(0);
     if (!acc[row]) acc[row] = [];
@@ -128,7 +143,6 @@ export default function SeatMap() {
     setSelectedSeats(selectedSeats.filter((s) => s !== seat));
   };
 
-  // ✅ Show payment popup
   const handleBooking = () => {
     if (!selectedSeats.length) {
       alert("Please select at least one seat.");
@@ -137,39 +151,31 @@ export default function SeatMap() {
     setShowPopup(true);
   };
 
-  // ✅ Confirm booking after payment
-  const handleProceedPayment = async () => {
-    const loggedInUserId = localStorage.getItem("userId");
+const handleProceedPayment = async () => {
+  try {
+    const sGst = 15;
+    const intermediate = 15;
+    const total = effectiveTicketPrice * selectedSeats.length + sGst + intermediate;
 
-    const payload = {
-      eventId: event._id,
-      venueId: selectedVenue._id,
-      timingId: timingId || null,
-      userId: loggedInUserId,
-      seats: selectedSeats,
-      showTime: selectedTiming ? selectedTiming.fromTime : "Not specified",
-    };
+    const response = await axios.post(
+      "http://localhost:5000/api/payments/create-checkout-session",
+      { totalAmount: total }
+    );
 
-    try {
-      const response = await fetch("http://localhost:5000/api/v1/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const { url } = response.data;
 
-      const data = await response.json();
-      if (response.ok) {
-        setBookedSeats([...bookedSeats, ...selectedSeats]);
-        setSelectedSeats([]);
-        setShowPopup(false);
-        alert("✅ Booking Confirmed & Payment Successful!");
-      } else {
-        alert(data.error || "Booking failed");
-      }
-    } catch (err) {
-      console.error("Booking request failed", err);
+    if (url) {
+      // ✅ redirect directly
+      window.location.href = url;
+    } else {
+      alert("Failed to create payment session.");
     }
-  };
+  } catch (err) {
+    console.error("Payment initiation failed:", err);
+    alert("Failed to start payment process.");
+  }
+};
+
 
   const sGst = 15;
   const intermediate = 15;
@@ -185,27 +191,20 @@ export default function SeatMap() {
           Timing: <strong>{selectedTiming.fromTime} - {selectedTiming.toTime}</strong>
         </p>
       )}
-      <p>💰 Ticket Price: ₹{effectiveTicketPrice}</p> {/* ✅ Showing ticket price */}
+      <p>💰 Ticket Price: ₹{effectiveTicketPrice}</p>
 
       <div className="seatmap-layout">
-        {/* Seat Map */}
         <div className="seatmap-card">
           <h3 className="text-lg font-bold mb-2">Seat Map</h3>
           {seatMapUrl ? (
-            <img
-              src={seatMapUrl}
-              alt={`${event.eventName} Seat Map`}
-              className="seat-map-image"
-            />
+            <img src={seatMapUrl} alt={`${event.eventName} Seat Map`} className="seat-map-image" />
           ) : (
             <p>No seat map available for this venue.</p>
           )}
         </div>
 
-        {/* Seat Selection */}
         <div className="seatmap-card">
           <h3 className="text-lg font-bold mb-2">Choose Your Seats</h3>
-
           <input
             type="text"
             placeholder="Search seat (e.g., A, B, C, A10)..."
@@ -218,11 +217,7 @@ export default function SeatMap() {
             {Object.keys(groupedSeats).map((row) => (
               <optgroup key={row} label={`Row ${row}`}>
                 {groupedSeats[row].map((seat) => (
-                  <option
-                    key={seat}
-                    value={seat}
-                    disabled={bookedSeats.includes(seat)}
-                  >
+                  <option key={seat} value={seat} disabled={bookedSeats.includes(seat)}>
                     {seat} {bookedSeats.includes(seat) ? "(Booked)" : ""}
                   </option>
                 ))}
@@ -238,10 +233,7 @@ export default function SeatMap() {
                   {selectedSeats.map((seat) => (
                     <li key={seat}>
                       {seat}{" "}
-                      <button
-                        className="remove-seat-btn"
-                        onClick={() => removeSeat(seat)}
-                      >
+                      <button className="remove-seat-btn" onClick={() => removeSeat(seat)}>
                         ✖
                       </button>
                     </li>
@@ -257,7 +249,6 @@ export default function SeatMap() {
         </div>
       </div>
 
-      {/* 💳 Payment Popup */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup-container">
@@ -276,8 +267,12 @@ export default function SeatMap() {
               <p className="total"><strong>Total Price :</strong> ₹{total}</p>
             </div>
 
-            <button className="proceed-btn" onClick={handleProceedPayment}>
-              Proceed
+            <button
+              className="proceed-btn"
+              onClick={handleProceedPayment}
+              disabled={!stripeReady} // ✅ disable until Stripe is ready
+            >
+              {stripeReady ? "Proceed to Pay" : "Loading Payment..."}
             </button>
           </div>
         </div>

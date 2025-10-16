@@ -23,7 +23,8 @@ import Streaks from "./pages/Streak.jsx";
 import Premium from "./pages/Premium.jsx";
 import Preferences from "./pages/Preferences.jsx";
 import Rewards from "./pages/Rewards.jsx";  
-
+import Success from "./pages/Success.jsx";
+import Cancel from "./pages/Cancel";
 
 function App() {
   const navigate = useNavigate();
@@ -97,6 +98,8 @@ function App() {
         <Route path="/premium" element={<Premium />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/rewards" element={<Rewards />} /> 
+        <Route path="/success" element={<Success />} />
+        <Route path="/cancel" element={<Cancel />} />
     </Routes>
   );
 }

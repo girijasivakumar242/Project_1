@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
-
+import paymentRoutes from "./routes/paymentRoutes.js";
 import googleAuthRouter from "./routes/google.routes.js";
 import healthcheckRouter from "./routes/healthcheck.routes.js";
 import userRouter from "./routes/user.routes.js";
@@ -14,7 +14,8 @@ import { errorHandler } from "./middlewares/error.middlewares.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import wishlistRoutes from "./routes/wishlist.routes.js";
 
-
+import dotenv from "dotenv";
+dotenv.config();
 
 
 
@@ -47,7 +48,7 @@ app.use("/api/v1/companies", companyRouter);
 app.use("/api/v1/events", eventRoute);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
-
+app.use("/api/payments", paymentRoutes);
 
 // Global error handler
 app.use(errorHandler);
