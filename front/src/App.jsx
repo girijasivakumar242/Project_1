@@ -81,7 +81,7 @@ function App() {
       <Route path="/category/:category" element={<CategoryPage />} />
       <Route path="/event/:id" element={<EventDetails />} />
      <Route 
-  path="/seatmap/:eventId/:location/:venueDate/:timingId?" 
+  path="/seatmap/:eventId/:location/:venueDate/:timingId?/:ticketPrice?" 
   element={<SeatMap />} 
 />
 

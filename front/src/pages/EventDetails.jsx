@@ -138,7 +138,7 @@ export default function EventDetails() {
                               navigate(
                                 `/seatmap/${event._id}/${encodeURIComponent(
                                   venue.location
-                                )}/${encodeURIComponent(date)}/${t._id}`
+                                )}/${encodeURIComponent(date)}/${t._id}/${t.ticketPrice}`
                               )
                             }
                           >

@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import "../styles/SeatMap.css";
+import "../styles/PaymentPopup.css"; // 👈 Popup CSS file
 
 export default function SeatMap() {
-  const { eventId, location, venueDate, timingId } = useParams();
+  const { eventId, location, venueDate, timingId, ticketPrice } = useParams(); // ✅ Added ticketPrice
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ export default function SeatMap() {
   const [search, setSearch] = useState("");
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
-  const [bookingMessage, setBookingMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false); // 👈 Popup state
 
   // ✅ Fetch event details
   useEffect(() => {
@@ -91,6 +92,9 @@ export default function SeatMap() {
   // ✅ Get selected timing
   const selectedTiming = selectedVenue.timings?.find((t) => t._id === timingId);
 
+  // ✅ Determine ticket price (from URL or timing)
+  const effectiveTicketPrice = parseFloat(ticketPrice) || selectedTiming?.ticketPrice || 0;
+
   // ✅ Generate seats (A–Z, 20 seats each)
   const seatNumbers = Array.from({ length: 26 }, (_, i) =>
     String.fromCharCode(65 + i)
@@ -124,13 +128,17 @@ export default function SeatMap() {
     setSelectedSeats(selectedSeats.filter((s) => s !== seat));
   };
 
-  // ✅ Booking handler
-  const handleBooking = async () => {
+  // ✅ Show payment popup
+  const handleBooking = () => {
     if (!selectedSeats.length) {
       alert("Please select at least one seat.");
       return;
     }
+    setShowPopup(true);
+  };
 
+  // ✅ Confirm booking after payment
+  const handleProceedPayment = async () => {
     const loggedInUserId = localStorage.getItem("userId");
 
     const payload = {
@@ -139,7 +147,7 @@ export default function SeatMap() {
       timingId: timingId || null,
       userId: loggedInUserId,
       seats: selectedSeats,
-      showTime: selectedTiming ? selectedTiming.fromTime : "Not specified", // ✅ store timing
+      showTime: selectedTiming ? selectedTiming.fromTime : "Not specified",
     };
 
     try {
@@ -150,11 +158,11 @@ export default function SeatMap() {
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        setBookingMessage(`✅ Booking confirmed for ${payload.showTime}!`);
         setBookedSeats([...bookedSeats, ...selectedSeats]);
         setSelectedSeats([]);
+        setShowPopup(false);
+        alert("✅ Booking Confirmed & Payment Successful!");
       } else {
         alert(data.error || "Booking failed");
       }
@@ -163,14 +171,21 @@ export default function SeatMap() {
     }
   };
 
+  const sGst = 15;
+  const intermediate = 15;
+  const total = effectiveTicketPrice * selectedSeats.length + sGst + intermediate;
+
   return (
     <div className="seatmap-container">
       <h2>{event.eventName}</h2>
       <p>Location: {decodeURIComponent(location)}</p>
       <p>Date: {decodeURIComponent(venueDate)}</p>
       {selectedTiming && (
-        <p>Timing: <strong>{selectedTiming.fromTime} - {selectedTiming.toTime}</strong></p>
+        <p>
+          Timing: <strong>{selectedTiming.fromTime} - {selectedTiming.toTime}</strong>
+        </p>
       )}
+      <p>💰 Ticket Price: ₹{effectiveTicketPrice}</p> {/* ✅ Showing ticket price */}
 
       <div className="seatmap-layout">
         {/* Seat Map */}
@@ -239,10 +254,34 @@ export default function SeatMap() {
               </button>
             </>
           )}
-
-          {bookingMessage && <p className="booking-msg">{bookingMessage}</p>}
         </div>
       </div>
+
+      {/* 💳 Payment Popup */}
+      {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup-container">
+            <button className="close-btn" onClick={() => setShowPopup(false)}>✖</button>
+            <h2>{event.eventName}</h2>
+            <p>
+              <strong>{decodeURIComponent(location)}</strong>{" "}
+              <span className="time">{selectedTiming?.fromTime}</span>
+            </p>
+
+            <div className="price-details">
+              <p><strong>Ticket Price</strong> : ₹{effectiveTicketPrice} x {selectedSeats.length}</p>
+              <p><strong>sGst & cGst</strong> : ₹{sGst}</p>
+              <p><strong>intermediate cost</strong> : ₹{intermediate}</p>
+              <hr />
+              <p className="total"><strong>Total Price :</strong> ₹{total}</p>
+            </div>
+
+            <button className="proceed-btn" onClick={handleProceedPayment}>
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
