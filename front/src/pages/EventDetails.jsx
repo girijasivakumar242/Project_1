@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/EventDetails.css";
 
-// ✅ Helper function: calculate duration between two times
+// Helper: calculate duration between two times
 function calculateDuration(fromTime, toTime) {
   if (!fromTime || !toTime) return "";
   const [fh, fm] = fromTime.split(":").map(Number);
@@ -14,7 +14,6 @@ function calculateDuration(fromTime, toTime) {
   from.setHours(fh, fm, 0);
   to.setHours(th, tm, 0);
 
-  // Handle next-day case
   if (to < from) to.setDate(to.getDate() + 1);
 
   const diff = (to - from) / 60000; // minutes
@@ -35,7 +34,7 @@ export default function EventDetails() {
         const res = await axios.get(`http://localhost:5000/api/v1/events/${id}`);
         setEvent(res.data);
       } catch (err) {
-        console.error("❌ Error fetching event:", err);
+        console.error("Error fetching event:", err);
       }
     };
     fetchEvent();
@@ -43,10 +42,7 @@ export default function EventDetails() {
 
   if (!event) return <p className="loading">Loading...</p>;
 
-  /**
-   * ✅ Group venues by date & location
-   * BUT merge timings of the same location into one card
-   */
+  // Group venues by date & location, merge timings
   const venuesByDate = {};
   event.venues?.forEach((venue) => {
     const date = venue.startDate
@@ -64,9 +60,10 @@ export default function EventDetails() {
       };
     }
 
-    // ✅ Case 1: timing stored directly in venue
+    // Case 1: timing directly on venue
     if (venue.fromTime && venue.toTime) {
       venuesByDate[date][venue.location].timings.push({
+        _id: venue._id, // assign unique id
         fromTime: venue.fromTime,
         toTime: venue.toTime,
         seatMap: venue.seatMap,
@@ -75,15 +72,16 @@ export default function EventDetails() {
       });
     }
 
-    // ✅ Case 2: multiple timings inside array
+    // Case 2: multiple timings inside array
     if (venue.timings && Array.isArray(venue.timings)) {
       venue.timings.forEach((t) => {
         venuesByDate[date][venue.location].timings.push({
+          _id: t._id, 
           fromTime: t.fromTime,
           toTime: t.toTime,
-          seatMap: t.seatMap,
-          totalSeats: t.totalSeats,
-          ticketPrice: venue.ticketPrice,
+          seatMap: t.seatMap || venue.seatMap,
+          totalSeats: t.totalSeats || venue.totalSeats,
+          ticketPrice: t.ticketPrice || venue.ticketPrice,
         });
       });
     }
@@ -92,7 +90,7 @@ export default function EventDetails() {
   return (
     <main className="main-content">
       <div className="event-details-page">
-        {/* ✅ Event Header */}
+        {/* Event Header */}
         <div className="event-header">
           <div className="event-info">
             <h1>{event.eventName}</h1>
@@ -108,7 +106,7 @@ export default function EventDetails() {
           )}
         </div>
 
-        {/* ✅ Venue listings grouped by date */}
+        {/* Venue Listings */}
         <div className="venues-section">
           {Object.keys(venuesByDate).map((date, idx) => (
             <div key={idx} className="date-section">
@@ -129,7 +127,7 @@ export default function EventDetails() {
                     </p>
                   </div>
 
-                  {/* ✅ Timings list */}
+                  {/* Timings List */}
                   <div className="showtimes">
                     {venue.timings.length > 0 ? (
                       venue.timings.map((t, tIdx) => (
@@ -140,19 +138,17 @@ export default function EventDetails() {
                               navigate(
                                 `/seatmap/${event._id}/${encodeURIComponent(
                                   venue.location
-                                )}/${encodeURIComponent(date)}`
+                                )}/${encodeURIComponent(date)}/${t._id}`
                               )
                             }
                           >
-                            {t.fromTime} – {t.toTime}
+                            {t.fromTime || "Not specified"} – {t.toTime || "Not specified"}
                           </button>
                           <span className="duration">
                             ⏱ {calculateDuration(t.fromTime, t.toTime)}
                           </span>
                           {t.totalSeats && (
-                            <span className="seats">
-                              🎟 {t.totalSeats} seats
-                            </span>
+                            <span className="seats">🎟 {t.totalSeats} seats</span>
                           )}
                           <p className="ticket-price">💰 ₹{t.ticketPrice}</p>
                         </div>

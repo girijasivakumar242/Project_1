@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 import { Booking } from "../models/booking.model.js";
 import { Event } from "../models/event.model.js";
+import { User } from "../models/user.model.js";
 
 export const createBooking = async (req, res) => {
   try {
     let { eventId, venueId, timingId, userId, seats } = req.body;
 
-    // sanitize
     if (!eventId || !venueId || !userId || !Array.isArray(seats) || seats.length === 0) {
       return res.status(400).json({ error: "Missing or invalid required fields" });
     }
@@ -18,12 +18,14 @@ export const createBooking = async (req, res) => {
     const venue = event.venues.find((v) => v._id.toString() === venueId);
     if (!venue) return res.status(404).json({ error: "Venue not found for this event" });
 
-    let timing = null;
-    if (timingId) {
-      timing = venue.timings.find((t) => t._id.toString() === timingId);
-      if (!timing) return res.status(404).json({ error: "Timing not found for this venue" });
-    }
+    const timing = timingId
+      ? venue.timings.find((t) => t._id.toString() === timingId)
+      : null;
 
+    const user = await User.findById(userId).lean();
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // check for seat overlaps
     const filter = { eventId, venueId, status: "confirmed" };
     if (timingId) filter.timingId = timingId;
 
@@ -36,9 +38,19 @@ export const createBooking = async (req, res) => {
       }
     }
 
+    // ✅ Add booking with extra details
+    const bookingData = {
+      userId,
+      username: user.username,
+      seats,
+      ticketPrice: venue.ticketPrice,
+      showTime: req.body.showTime || "Not specified",
+      bookedAt: new Date(),
+    };
+
     const updatedBooking = await Booking.findOneAndUpdate(
       filter,
-      { $push: { bookings: { userId, seats } }, status: "confirmed" },
+      { $push: { bookings: bookingData }, status: "confirmed" },
       { upsert: true, new: true }
     );
 
@@ -95,22 +107,26 @@ export const getUserBookings = async (req, res) => {
       // ✅ Only include this user’s sub-bookings
       for (let b of booking.bookings) {
         if (b.userId?.toString() === userId) {
-          enriched.push({
-            bookingId: b._id?.toString(),
-            eventName: event.eventName,
-            eventDate: venue.startDate,
-            seats: b.seats,
-            venue: {
-              _id: venue._id,
-              location: venue.location,
-              ticketPrice: venue.ticketPrice,
-              seatMap: venue.seatMap,
-            },
-            timings,
-            status: booking.status,
-            createdAt: b.createdAt || booking.createdAt,
-            updatedAt: b.updatedAt || booking.updatedAt,
-          });
+          for (let b of booking.bookings) {
+  if (b.userId?.toString() === userId) {
+    enriched.push({
+      bookingId: b._id?.toString(),
+      eventName: event.eventName,
+      eventDate: venue.startDate,
+      seats: b.seats,
+      venue: {
+        _id: venue._id,
+        location: venue.location,
+        ticketPrice: b.ticketPrice, // use booked price
+        seatMap: venue.seatMap,
+      },
+      showTime: b.showTime, // ✅ include booked show time
+      status: booking.status,
+      createdAt: b.createdAt || booking.createdAt,
+      updatedAt: b.updatedAt || booking.updatedAt,
+    });
+  }
+}
         }
       }
     }

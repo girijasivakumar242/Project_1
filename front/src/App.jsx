@@ -80,7 +80,10 @@ function App() {
       <Route path="/audience-dashboard" element={<AudienceDashboard />} />
       <Route path="/category/:category" element={<CategoryPage />} />
       <Route path="/event/:id" element={<EventDetails />} />
-      <Route path="/seatmap/:eventId/:location/:venueDate" element={<SeatMap />} />
+     <Route 
+  path="/seatmap/:eventId/:location/:venueDate/:timingId?" 
+  element={<SeatMap />} 
+/>
 
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/booking-status/:eventId" element={<BookingStatus />} />

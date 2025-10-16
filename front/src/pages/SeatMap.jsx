@@ -18,9 +18,7 @@ export default function SeatMap() {
   useEffect(() => {
     async function fetchEvent() {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/v1/events/${eventId}`
-        );
+        const res = await axios.get(`http://localhost:5000/api/v1/events/${eventId}`);
         setEvent(res.data);
       } catch (err) {
         setError("Failed to fetch event details");
@@ -31,23 +29,35 @@ export default function SeatMap() {
     fetchEvent();
   }, [eventId]);
 
-  // ✅ Merge all venues with same location & date
+  // ✅ Merge venues by location & date
   const mergedVenue = event?.venues
     ?.filter(
       (v) =>
         v.location === decodeURIComponent(location) &&
-        new Date(v.startDate).toLocaleDateString() ===
-          decodeURIComponent(venueDate)
+        new Date(v.startDate).toLocaleDateString() === decodeURIComponent(venueDate)
     )
-    ?.reduce(
-      (acc, v) => ({
+    ?.reduce((acc, v) => {
+      const timings = [...(acc.timings || [])];
+      if (v.timings && Array.isArray(v.timings)) {
+        timings.push(...v.timings);
+      } else if (v.fromTime || v.toTime) {
+        timings.push({
+          _id: v._id,
+          fromTime: v.fromTime,
+          toTime: v.toTime,
+          seatMap: v.seatMap,
+          totalSeats: v.totalSeats,
+          ticketPrice: v.ticketPrice,
+        });
+      }
+      return {
+        ...acc,
         _id: acc._id || v._id,
         location: v.location,
         seatMap: v.seatMap || acc.seatMap,
-        timings: v.timings || acc.timings,
-      }),
-      {}
-    );
+        timings,
+      };
+    }, {});
 
   const selectedVenue = mergedVenue;
 
@@ -59,8 +69,6 @@ export default function SeatMap() {
         const res = await axios.get(
           `http://localhost:5000/api/v1/bookings/${eventId}/${selectedVenue._id}/${timingId}`
         );
-
-        // Flatten out booked seats
         const booked = res.data.flatMap((booking) =>
           booking.bookings ? booking.bookings.flatMap((b) => b.seats) : []
         );
@@ -78,9 +86,10 @@ export default function SeatMap() {
   if (!selectedVenue) return <p>No venue found for this location.</p>;
 
   // ✅ Seat map image
-  const seatMapUrl = selectedVenue.seatMap
-    ? `http://localhost:5000${selectedVenue.seatMap}`
-    : null;
+  const seatMapUrl = selectedVenue.seatMap ? `http://localhost:5000${selectedVenue.seatMap}` : null;
+
+  // ✅ Get selected timing
+  const selectedTiming = selectedVenue.timings?.find((t) => t._id === timingId);
 
   // ✅ Generate seats (A–Z, 20 seats each)
   const seatNumbers = Array.from({ length: 26 }, (_, i) =>
@@ -104,14 +113,9 @@ export default function SeatMap() {
     return acc;
   }, {});
 
-  // ✅ Select seat
   const handleSeatSelect = (e) => {
     const seat = e.target.value;
-    if (
-      seat &&
-      !selectedSeats.includes(seat) &&
-      !bookedSeats.includes(seat)
-    ) {
+    if (seat && !selectedSeats.includes(seat) && !bookedSeats.includes(seat)) {
       setSelectedSeats([...selectedSeats, seat]);
     }
   };
@@ -120,54 +124,53 @@ export default function SeatMap() {
     setSelectedSeats(selectedSeats.filter((s) => s !== seat));
   };
 
-// ✅ Booking handler
-const handleBooking = async () => {
-  if (!selectedSeats.length) {
-    alert("Please select at least one seat.");
-    return;
-  }
-
-  // get userId from localStorage (after login you should save it there)
-  const loggedInUserId = localStorage.getItem("userId");
-
-  const payload = {
-    eventId: event._id,            // ✅ use event from state
-    venueId: selectedVenue._id,    // ✅ use selectedVenue
-    timingId: timingId || null,    // ✅ optional
-    userId: loggedInUserId,        // ✅ from localStorage
-    seats: selectedSeats,
-  };
-  console.log("📌 Booking Payload:", payload);
-
-
-  try {
-    const response = await fetch("http://localhost:5000/api/v1/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    console.log("📌 Booking Response:", data);
-
-    if (response.ok) {
-      setBookingMessage("✅ Booking confirmed!");
-      setBookedSeats([...bookedSeats, ...selectedSeats]);
-      setSelectedSeats([]);
-    } else {
-      alert(data.error || "Booking failed");
+  // ✅ Booking handler
+  const handleBooking = async () => {
+    if (!selectedSeats.length) {
+      alert("Please select at least one seat.");
+      return;
     }
-  } catch (err) {
-    console.error("Booking request failed", err);
-  }
-};
 
+    const loggedInUserId = localStorage.getItem("userId");
+
+    const payload = {
+      eventId: event._id,
+      venueId: selectedVenue._id,
+      timingId: timingId || null,
+      userId: loggedInUserId,
+      seats: selectedSeats,
+      showTime: selectedTiming ? selectedTiming.fromTime : "Not specified", // ✅ store timing
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookingMessage(`✅ Booking confirmed for ${payload.showTime}!`);
+        setBookedSeats([...bookedSeats, ...selectedSeats]);
+        setSelectedSeats([]);
+      } else {
+        alert(data.error || "Booking failed");
+      }
+    } catch (err) {
+      console.error("Booking request failed", err);
+    }
+  };
 
   return (
     <div className="seatmap-container">
       <h2>{event.eventName}</h2>
       <p>Location: {decodeURIComponent(location)}</p>
       <p>Date: {decodeURIComponent(venueDate)}</p>
+      {selectedTiming && (
+        <p>Timing: <strong>{selectedTiming.fromTime} - {selectedTiming.toTime}</strong></p>
+      )}
 
       <div className="seatmap-layout">
         {/* Seat Map */}
@@ -188,7 +191,6 @@ const handleBooking = async () => {
         <div className="seatmap-card">
           <h3 className="text-lg font-bold mb-2">Choose Your Seats</h3>
 
-          {/* Search */}
           <input
             type="text"
             placeholder="Search seat (e.g., A, B, C, A10)..."
@@ -196,7 +198,6 @@ const handleBooking = async () => {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          {/* Seat Dropdown */}
           <select onChange={handleSeatSelect}>
             <option value="">Select a seat</option>
             {Object.keys(groupedSeats).map((row) => (
@@ -214,7 +215,6 @@ const handleBooking = async () => {
             ))}
           </select>
 
-          {/* Selected Seats */}
           {selectedSeats.length > 0 && (
             <>
               <div className="selected-seats-list">

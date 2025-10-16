@@ -36,38 +36,28 @@ export default function Remainder() {
   useEffect(() => {
     if (notificationsEnabled && bookings.length > 0) {
       const autoReminders = bookings.flatMap((b) => {
-        if (!b.eventDate || !b.timings) return [];
+        if (!b.eventDate || !b.showTime) return [];
 
-        return b.timings.map((t) => {
-          const eventDateTime = new Date(b.eventDate);
-          if (t?.fromTime) {
-            const [hours, minutes] = t.fromTime.split(":");
-            eventDateTime.setHours(hours, minutes, 0, 0);
-          } else {
-            eventDateTime.setHours(10, 0, 0, 0);
-          }
+        const eventDateTime = new Date(b.eventDate);
+        const [hours, minutes] = b.showTime.split(":").map(Number);
+        eventDateTime.setHours(hours, minutes, 0, 0);
 
-          const reminderTime = new Date(eventDateTime.getTime() - 30 * 60000);
-          return {
-            bookingId: b.bookingId,
-            eventName: b.eventName,
-            eventDate: b.eventDate,
-            seats: b.seats || [],
-            venue: b.venue?.location || "N/A",
-            timing: `${t.fromTime}`,
-            time: reminderTime,
-          };
-        });
+        const reminderTime = new Date(eventDateTime.getTime() - 30 * 60000); // 30 mins before
+
+        return {
+          bookingId: b.bookingId,
+          eventName: b.eventName,
+          eventDate: b.eventDate,
+          seats: b.seats || [],
+          venue: b.venue?.location || "N/A",
+          timing: b.showTime, // ✅ use booked showTime
+          time: reminderTime,
+        };
       });
 
       // ✅ Filter only upcoming reminders
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const upcomingReminders = autoReminders.filter((r) => {
-        const eventDate = new Date(r.eventDate);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      });
+      const now = new Date();
+      const upcomingReminders = autoReminders.filter((r) => new Date(r.eventDate) >= now);
 
       // ✅ Save per-user reminders
       const userId = localStorage.getItem("userId");
