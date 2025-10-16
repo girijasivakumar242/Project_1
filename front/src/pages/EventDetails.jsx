@@ -45,6 +45,7 @@ export default function EventDetails() {
 
   /**
    * ✅ Group venues by date & location
+   * BUT merge timings of the same location into one card
    */
   const venuesByDate = {};
   event.venues?.forEach((venue) => {
@@ -59,7 +60,6 @@ export default function EventDetails() {
         location: venue.location,
         startDate: venue.startDate,
         endDate: venue.endDate,
-        ticketPrice: venue.ticketPrice,
         timings: [],
       };
     }
@@ -71,6 +71,7 @@ export default function EventDetails() {
         toTime: venue.toTime,
         seatMap: venue.seatMap,
         totalSeats: venue.totalSeats,
+        ticketPrice: venue.ticketPrice,
       });
     }
 
@@ -82,6 +83,7 @@ export default function EventDetails() {
           toTime: t.toTime,
           seatMap: t.seatMap,
           totalSeats: t.totalSeats,
+          ticketPrice: venue.ticketPrice,
         });
       });
     }
@@ -152,14 +154,13 @@ export default function EventDetails() {
                               🎟 {t.totalSeats} seats
                             </span>
                           )}
+                          <p className="ticket-price">💰 ₹{t.ticketPrice}</p>
                         </div>
                       ))
                     ) : (
                       <p className="no-timings">No showtimes available</p>
                     )}
                   </div>
-
-                  <p className="ticket-price">💰 Ticket: ₹{venue.ticketPrice}</p>
                 </div>
               ))}
             </div>
