@@ -157,15 +157,32 @@ const handleProceedPayment = async () => {
     const intermediate = 15;
     const total = effectiveTicketPrice * selectedSeats.length + sGst + intermediate;
 
-    const response = await axios.post(
+    // 1️⃣ Create booking on the backend first
+    const bookingRes = await axios.post("http://localhost:5000/api/v1/bookings", {
+      eventId,
+      venueId: selectedVenue._id,
+      timingId,
+      userId: localStorage.getItem("userId"), // or however you manage auth
+      seats: selectedSeats,
+      showTime: selectedTiming.fromTime,
+    });
+
+    const bookingId = bookingRes.data.bookingId;
+
+    // 2️⃣ Then create Stripe checkout session using real bookingId
+    const paymentRes = await axios.post(
       "http://localhost:5000/api/payments/create-checkout-session",
-      { totalAmount: total }
+      {
+        amount: total,
+        currency: "inr",
+        eventTitle: event.eventName,
+        bookingId: bookingId,
+        seatNumbers: selectedSeats,
+      }
     );
 
-    const { url } = response.data;
-
+    const { url } = paymentRes.data;
     if (url) {
-      // ✅ redirect directly
       window.location.href = url;
     } else {
       alert("Failed to create payment session.");

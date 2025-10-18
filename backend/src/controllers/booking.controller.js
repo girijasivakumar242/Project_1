@@ -5,61 +5,65 @@ import { User } from "../models/user.model.js";
 
 export const createBooking = async (req, res) => {
   try {
-    let { eventId, venueId, timingId, userId, seats } = req.body;
+    const { eventId, venueId, timingId, userId, seats, showTime } = req.body;
 
     if (!eventId || !venueId || !userId || !Array.isArray(seats) || seats.length === 0) {
-      return res.status(400).json({ error: "Missing or invalid required fields" });
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    if (!timingId) timingId = undefined;
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: "Event not found" });
 
     const venue = event.venues.find((v) => v._id.toString() === venueId);
-    if (!venue) return res.status(404).json({ error: "Venue not found for this event" });
+    if (!venue) return res.status(404).json({ error: "Venue not found" });
 
-    const timing = timingId
-      ? venue.timings.find((t) => t._id.toString() === timingId)
-      : null;
-
-    const user = await User.findById(userId).lean();
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // check for seat overlaps
-    const filter = { eventId, venueId, status: "confirmed" };
-    if (timingId) filter.timingId = timingId;
+    // ✅ Check seat conflicts with existing confirmed bookings
+    const existingBookings = await Booking.find({
+      eventId,
+      venueId,
+      timingId,
+      status: "confirmed",
+    });
 
-    const existingBooking = await Booking.findOne(filter);
-    if (existingBooking) {
-      const allBookedSeats = existingBooking.bookings.flatMap((b) => b.seats);
-      const overlap = seats.filter((s) => allBookedSeats.includes(s));
-      if (overlap.length > 0) {
-        return res.status(400).json({ error: `These seats are already booked: ${overlap.join(", ")}` });
+    for (let b of existingBookings) {
+      const alreadyBooked = b.bookings.flatMap((s) => s.seats);
+      const conflict = seats.filter((s) => alreadyBooked.includes(s));
+      if (conflict.length > 0) {
+        return res.status(400).json({ error: `Seats already booked: ${conflict.join(", ")}` });
       }
     }
 
-    // ✅ Add booking with extra details
-    const bookingData = {
-      userId,
-      username: user.username,
-      seats,
-      ticketPrice: venue.ticketPrice,
-      showTime: req.body.showTime || "Not specified",
-      bookedAt: new Date(),
-    };
+    // ✅ Create booking
+    const newBooking = await Booking.create({
+      eventId,
+      venueId,
+      timingId,
+      bookings: [
+        {
+          userId,
+          username: user.username,
+          seats,
+          ticketPrice: venue.ticketPrice,
+          showTime,
+          paymentStatus: "pending", // will be updated by Stripe webhook
+        },
+      ],
+      status: "confirmed",
+    });
 
-    const updatedBooking = await Booking.findOneAndUpdate(
-      filter,
-      { $push: { bookings: bookingData }, status: "confirmed" },
-      { upsert: true, new: true }
-    );
-
-    res.status(201).json({ message: "Booking successful", booking: updatedBooking });
-  } catch (error) {
-    console.error("💥 [createBooking] Error:", error);
-    res.status(500).json({ error: "Failed to create booking", details: error.message });
+    res.status(201).json({
+      message: "Booking created (pending payment)",
+      bookingId: newBooking._id,
+    });
+  } catch (err) {
+    console.error("Booking error:", err);
+    res.status(500).json({ error: err.message });
   }
 };
+
 
 
 export const getUserBookings = async (req, res) => {
@@ -121,7 +125,7 @@ export const getUserBookings = async (req, res) => {
         seatMap: venue.seatMap,
       },
       showTime: b.showTime, // ✅ include booked show time
-      status: booking.status,
+      status: b.status,
       createdAt: b.createdAt || booking.createdAt,
       updatedAt: b.updatedAt || booking.updatedAt,
     });

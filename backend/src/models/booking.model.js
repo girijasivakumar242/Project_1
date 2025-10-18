@@ -8,11 +8,17 @@ const bookingSchema = new mongoose.Schema(
     bookings: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        username: { type: String, required: true }, // ✅ Store username
+        username: { type: String, required: true },
         seats: { type: [String], required: true },
-        ticketPrice: { type: Number, required: true }, // ✅ Store ticket price
-        showTime: { type: String, required: true }, // ✅ Store timing (e.g., "7:00 PM" or ISO date-time)
-        bookedAt: { type: Date, default: Date.now }, // ✅ When the user booked
+        ticketPrice: { type: Number, required: true },
+        showTime: { type: String, required: true },
+        bookedAt: { type: Date, default: Date.now },
+
+        // ✅ Payment info added
+        paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+        paymentSessionId: { type: String },   // Stripe session ID
+        amountPaid: { type: Number },         // Total amount paid
+        currency: { type: String },           // e.g., "inr"
       },
     ],
     status: { type: String, enum: ["confirmed", "cancelled"], default: "confirmed" },

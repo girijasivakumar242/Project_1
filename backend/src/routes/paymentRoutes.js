@@ -1,5 +1,5 @@
 import express from "express";
-import { createCheckoutSession } from "../controllers/paymentController.js";
+import { createCheckoutSession , stripeWebhook} from "../controllers/paymentController.js";
 import dotenv from "dotenv";
 dotenv.config();
 const router = express.Router();
@@ -11,4 +11,5 @@ router.get("/stripe-key", (req, res) => {
   }
   res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
 });
+
 export default router;
