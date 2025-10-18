@@ -66,6 +66,7 @@ export const stripeWebhook = async (req, res) => {
         }
       });
 
+      booking.status = "confirmed";
       await booking.save();
       console.log(`Booking ${bookingId} marked as PAID`);
     } catch (err) {

@@ -21,7 +21,7 @@ const bookingSchema = new mongoose.Schema(
         currency: { type: String },           // e.g., "inr"
       },
     ],
-    status: { type: String, enum: ["confirmed", "cancelled"], default: "confirmed" },
+    status: { type: String, enum: ["confirmed", "pending","cancelled"], default: "confirmed" },
   },
   { timestamps: true }
 );

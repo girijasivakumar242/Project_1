@@ -1,3 +1,4 @@
+// 📁 SeatMap.jsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
@@ -7,7 +8,6 @@ import "../styles/PaymentPopup.css";
 
 export default function SeatMap() {
   const { eventId, location, venueDate, timingId, ticketPrice } = useParams();
-
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,15 +16,15 @@ export default function SeatMap() {
   const [bookedSeats, setBookedSeats] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [stripe, setStripe] = useState(null);
-  const [stripeReady, setStripeReady] = useState(false); // ✅ Track Stripe readiness
+  const [stripeReady, setStripeReady] = useState(false);
 
-  // Fetch event details
+  // ✅ Fetch Event
   useEffect(() => {
     async function fetchEvent() {
       try {
         const res = await axios.get(`http://localhost:5000/api/v1/events/${eventId}`);
         setEvent(res.data);
-      } catch (err) {
+      } catch {
         setError("Failed to fetch event details");
       } finally {
         setLoading(false);
@@ -33,7 +33,7 @@ export default function SeatMap() {
     fetchEvent();
   }, [eventId]);
 
-  // Merge venue timings
+  // ✅ Merge Venues
   const mergedVenue = event?.venues
     ?.filter(
       (v) =>
@@ -65,7 +65,7 @@ export default function SeatMap() {
 
   const selectedVenue = mergedVenue;
 
-  // Fetch booked seats
+  // ✅ Fetch Booked Seats — only `paymentStatus === "paid"`
   useEffect(() => {
     async function fetchBookedSeats() {
       if (!timingId || !selectedVenue?._id) return;
@@ -73,8 +73,13 @@ export default function SeatMap() {
         const res = await axios.get(
           `http://localhost:5000/api/v1/bookings/${eventId}/${selectedVenue._id}/${timingId}`
         );
+
         const booked = res.data.flatMap((booking) =>
-          booking.bookings ? booking.bookings.flatMap((b) => b.seats) : []
+          booking.bookings
+            ? booking.bookings
+                .filter((b) => b.paymentStatus === "paid") // 👈 ONLY paid seats
+                .flatMap((b) => b.seats)
+            : []
         );
         setBookedSeats(booked);
       } catch (err) {
@@ -84,7 +89,7 @@ export default function SeatMap() {
     fetchBookedSeats();
   }, [eventId, timingId, selectedVenue?._id]);
 
-  // Fetch Stripe publishable key from backend
+  // ✅ Fetch Stripe key
   useEffect(() => {
     async function fetchStripeKey() {
       try {
@@ -92,9 +97,7 @@ export default function SeatMap() {
         if (res.data.publishableKey) {
           const stripeInstance = await loadStripe(res.data.publishableKey);
           setStripe(stripeInstance);
-          setStripeReady(true); // ✅ Stripe is now ready
-        } else {
-          console.error("Stripe publishable key not received from backend");
+          setStripeReady(true);
         }
       } catch (err) {
         console.error("Failed to fetch Stripe key", err);
@@ -112,12 +115,9 @@ export default function SeatMap() {
   const selectedTiming = selectedVenue.timings?.find((t) => t._id === timingId);
   const effectiveTicketPrice = parseFloat(ticketPrice) || selectedTiming?.ticketPrice || 0;
 
-  // Generate seat numbers
   const seatNumbers = Array.from({ length: 26 }, (_, i) =>
     String.fromCharCode(65 + i)
-  ).flatMap((row) =>
-    Array.from({ length: 20 }, (_, j) => `${row}${j + 1}`)
-  );
+  ).flatMap((row) => Array.from({ length: 20 }, (_, j) => `${row}${j + 1}`));
 
   const filteredSeats = seatNumbers.filter((seat) => {
     if (!search) return true;
@@ -139,9 +139,7 @@ export default function SeatMap() {
     }
   };
 
-  const removeSeat = (seat) => {
-    setSelectedSeats(selectedSeats.filter((s) => s !== seat));
-  };
+  const removeSeat = (seat) => setSelectedSeats(selectedSeats.filter((s) => s !== seat));
 
   const handleBooking = () => {
     if (!selectedSeats.length) {
@@ -151,48 +149,47 @@ export default function SeatMap() {
     setShowPopup(true);
   };
 
-const handleProceedPayment = async () => {
-  try {
-    const sGst = 15;
-    const intermediate = 15;
-    const total = effectiveTicketPrice * selectedSeats.length + sGst + intermediate;
+  const handleProceedPayment = async () => {
+    try {
+      const sGst = 15;
+      const intermediate = 15;
+      const total = effectiveTicketPrice * selectedSeats.length + sGst + intermediate;
 
-    // 1️⃣ Create booking on the backend first
-    const bookingRes = await axios.post("http://localhost:5000/api/v1/bookings", {
-      eventId,
-      venueId: selectedVenue._id,
-      timingId,
-      userId: localStorage.getItem("userId"), // or however you manage auth
-      seats: selectedSeats,
-      showTime: selectedTiming.fromTime,
-    });
+      // ✅ Create pending booking
+      const bookingRes = await axios.post("http://localhost:5000/api/v1/bookings", {
+        eventId,
+        venueId: selectedVenue._id,
+        timingId,
+        userId: localStorage.getItem("userId"),
+        seats: selectedSeats,
+        showTime: selectedTiming.fromTime,
+      });
 
-    const bookingId = bookingRes.data.bookingId;
+      const bookingId = bookingRes.data.bookingId;
 
-    // 2️⃣ Then create Stripe checkout session using real bookingId
-    const paymentRes = await axios.post(
-      "http://localhost:5000/api/payments/create-checkout-session",
-      {
-        amount: total,
-        currency: "inr",
-        eventTitle: event.eventName,
-        bookingId: bookingId,
-        seatNumbers: selectedSeats,
+      // ✅ Create Stripe checkout session
+      const paymentRes = await axios.post(
+        "http://localhost:5000/api/payments/create-checkout-session",
+        {
+          amount: total,
+          currency: "inr",
+          eventTitle: event.eventName,
+          bookingId: bookingId,
+          seatNumbers: selectedSeats,
+        }
+      );
+
+      const { url } = paymentRes.data;
+      if (url) {
+        window.location.href = url;
+      } else {
+        alert("Failed to create payment session.");
       }
-    );
-
-    const { url } = paymentRes.data;
-    if (url) {
-      window.location.href = url;
-    } else {
-      alert("Failed to create payment session.");
+    } catch (err) {
+      console.error("Payment initiation failed:", err);
+      alert("Failed to start payment process.");
     }
-  } catch (err) {
-    console.error("Payment initiation failed:", err);
-    alert("Failed to start payment process.");
-  }
-};
-
+  };
 
   const sGst = 15;
   const intermediate = 15;
@@ -228,7 +225,6 @@ const handleProceedPayment = async () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-
           <select onChange={handleSeatSelect}>
             <option value="">Select a seat</option>
             {Object.keys(groupedSeats).map((row) => (
@@ -287,7 +283,7 @@ const handleProceedPayment = async () => {
             <button
               className="proceed-btn"
               onClick={handleProceedPayment}
-              disabled={!stripeReady} // ✅ disable until Stripe is ready
+              disabled={!stripeReady}
             >
               {stripeReady ? "Proceed to Pay" : "Loading Payment..."}
             </button>
