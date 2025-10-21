@@ -26,6 +26,7 @@ import Rewards from "./pages/Rewards.jsx";
 import Success from "./pages/Success.jsx";
 import Cancel from "./pages/Cancel";
 
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();

@@ -204,3 +204,40 @@ export const getEventBookings = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch event bookings", details: error.message });
   }
 };
+
+
+export const getBookingBySessionId = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const booking = await Booking.findOne({ "bookings.paymentSessionId": sessionId }).lean();
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    const matchedSubBooking = booking.bookings.find(
+      (b) => b.paymentSessionId === sessionId
+    );
+
+    // ✅ Get Event and Venue manually
+    const event = await Event.findById(booking.eventId).lean();
+    if (!event) return res.status(404).json({ error: "Event not found" });
+
+    const venue = event.venues.find(
+      (v) => v._id.toString() === booking.venueId.toString()
+    );
+
+    res.json({
+      bookingId: booking._id,
+      eventName: event.eventName,
+      venueName: venue ? venue.location : "Venue not found",
+      showTime: matchedSubBooking?.showTime,
+      seats: matchedSubBooking?.seats,
+      amountPaid: matchedSubBooking?.amountPaid,
+      currency: matchedSubBooking?.currency,
+      bookedAt: matchedSubBooking?.createdAt || booking.createdAt,
+      status: booking.status,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching booking by session ID:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

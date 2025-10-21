@@ -1,0 +1,110 @@
+/* Success.css */
+
+body {
+  background-color: #f4f6f8;
+  font-family: "Poppins", sans-serif;
+}
+
+.ticket-container {
+  max-width: 500px;
+  margin: 100px auto;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-header {
+  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.ticket-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.ticket-header p {
+  margin-top: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.ticket-card {
+  text-align: left;
+  padding: 15px 10px;
+}
+
+.ticket-card p {
+  font-size: 16px;
+  margin: 10px 0;
+  color: #333;
+}
+
+.ticket-card p strong {
+  color: #000;
+}
+
+.ticket-qr {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.ticket-qr canvas {
+  border: 3px solid #4CAF50;
+  padding: 10px;
+  border-radius: 10px;
+  background: white;
+}
+
+.download-link {
+  display: inline-block;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #4CAF50;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.download-link:hover {
+  color: #2E7D32;
+}
+
+.ticket-container button {
+  margin-top: 20px;
+  background-color: #4CAF50;
+  color: #ffffff;
+  border: none;
+  padding: 12px 25px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.ticket-container button:hover {
+  background-color: #2E7D32;
+}
+
+@media (max-width: 600px) {
+  .ticket-container {
+    margin: 50px 15px;
+    padding: 20px;
+  }
+
+  .ticket-header h2 {
+    font-size: 20px;
+  }
+
+  .ticket-card p {
+    font-size: 14px;
+  }
+}
