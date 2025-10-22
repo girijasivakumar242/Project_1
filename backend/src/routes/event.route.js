@@ -5,6 +5,8 @@ import fs from "fs";
 import { Event } from "../models/event.model.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import asyncHandler from "express-async-handler";
+import mongoose from "mongoose";
+
 
 const router = express.Router();
 
@@ -32,7 +34,7 @@ const upload = multer({ storage });
  * ===============================
  */
 
-// ✅ GET events by organiser
+// GET events by organiser
 router.get(
   "/organiser/:organiserId",
   asyncHandler(async (req, res) => {
@@ -42,27 +44,25 @@ router.get(
   })
 );
 
-// ✅ GET event by ID (merged across organisers)
+// GET event by ID
 router.get("/:id", async (req, res) => {
   try {
-    // Step 1: find base event
     const baseEvent = await Event.findById(req.params.id).lean();
     if (!baseEvent) return res.status(404).json({ error: "Event not found" });
 
-    // Step 2: find all events with same name + category
     const allEvents = await Event.find({
       eventName: baseEvent.eventName,
       category: baseEvent.category,
     }).lean();
 
-    // Step 3: merge venues + organisers
     let mergedEvent = {
-      _id: baseEvent._id, // keep the requested ID as reference
+      _id: baseEvent._id,
       eventName: baseEvent.eventName,
       category: baseEvent.category,
       poster: baseEvent.poster,
       venues: [],
       organisers: [],
+      createdAt: baseEvent.createdAt, // Include createdAt for frontend delete logic
     };
 
     allEvents.forEach((ev) => {
@@ -77,24 +77,22 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
-// ✅ GET all events (public, merged by eventName + category)
+// GET all events (public)
 router.get("/", async (req, res) => {
   try {
     const events = await Event.find().lean();
-
-    // Group events by eventName + category
     const groupedEvents = {};
     events.forEach((event) => {
       const key = `${event.eventName.toLowerCase()}-${event.category.toLowerCase()}`;
       if (!groupedEvents[key]) {
         groupedEvents[key] = {
-          _id: event._id, // pick first id
+          _id: event._id,
           eventName: event.eventName,
           category: event.category,
           poster: event.poster,
           venues: [...event.venues],
           organisers: [event.organiserId],
+          createdAt: event.createdAt,
         };
       } else {
         groupedEvents[key].venues.push(...event.venues);
@@ -109,15 +107,13 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ GET events by category (merged)
+// GET events by category (merged)
 router.get("/category/:category", async (req, res) => {
   try {
     const { category } = req.params;
     const events = await Event.find({ category: category.toLowerCase() }).lean();
-
-    if (!events.length) {
+    if (!events.length)
       return res.status(404).json({ error: "No events found for this category" });
-    }
 
     const groupedEvents = {};
     events.forEach((event) => {
@@ -130,6 +126,7 @@ router.get("/category/:category", async (req, res) => {
           poster: event.poster,
           venues: [...event.venues],
           organisers: [event.organiserId],
+          createdAt: event.createdAt,
         };
       } else {
         groupedEvents[key].venues.push(...event.venues);
@@ -144,7 +141,7 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
-// ✅ POST — Create event or add venues (organiser only)
+// POST — Create event or add venues (organiser only)
 router.post(
   "/",
   verifyJWT,
@@ -161,7 +158,6 @@ router.post(
     if (!req.body.venues)
       return res.status(400).json({ error: "At least one venue is required" });
 
-    // Parse venues JSON safely
     let venues = JSON.parse(req.body.venues);
     venues = venues.map((v) => ({
       location: v.location,
@@ -180,7 +176,6 @@ router.post(
 
     const posterPath = `/temp/${req.files.poster[0].filename}`;
 
-    // Check if event exists (same organiser, name, category)
     let event = await Event.findOne({
       eventName,
       category: category.trim().toLowerCase(),
@@ -188,12 +183,10 @@ router.post(
     });
 
     if (event) {
-      // Add new venues
       event.venues.push(...venues);
       await event.save();
       return res.status(200).json({ message: "Venues added", event });
     } else {
-      // Create new event
       const newEvent = new Event({
         category: category.trim().toLowerCase(),
         eventName,
@@ -206,5 +199,29 @@ router.post(
     }
   })
 );
+
+// ✅ DELETE event (organiser only, by ID)
+router.delete("/:id", verifyJWT, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid event ID" });
+  }
+
+  const event = await Event.findById(id);
+  if (!event) return res.status(404).json({ error: "Event not found" });
+
+  if (event.organiserId.toString() !== req.user._id.toString())
+    return res.status(403).json({ error: "Unauthorized to delete this event" });
+
+  const createdAt = new Date(event.createdAt);
+  const now = new Date();
+  if (now - createdAt > 10 * 60 * 1000)
+    return res.status(400).json({ error: "Delete window expired" });
+
+  await Event.findByIdAndDelete(id);
+  res.status(200).json({ message: "Event deleted successfully" });
+}));
+
 
 export default router;

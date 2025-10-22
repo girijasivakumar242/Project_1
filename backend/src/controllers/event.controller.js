@@ -77,3 +77,27 @@ export const createEvent = async (req, res) => {
     return res.status(500).json({ error: "Error creating event" });
   }
 };
+export const getEventById = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Fetch the event and include timestamps
+    const event = await Event.findById(eventId).lean(); // .lean() returns plain JS object
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    // Explicitly ensure createdAt and updatedAt are present
+    const eventWithTimestamps = {
+      ...event,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+    };
+
+    return res.status(200).json({ event: eventWithTimestamps });
+  } catch (error) {
+    console.error("❌ Error fetching event:", error);
+    return res.status(500).json({ error: "Error fetching event" });
+  }
+};
