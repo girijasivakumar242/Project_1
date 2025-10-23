@@ -100,7 +100,7 @@ export default function EventDetails() {
             <img
               src={`http://localhost:5000${event.poster}`}
               alt={event.eventName}
-              className="event-poster"
+              className="event-posters"
               onError={(e) => (e.target.src = "/placeholder.png")}
             />
           )}

@@ -58,8 +58,8 @@ body {
 }
 
 .ticket-qr canvas {
-  border: 3px solid #ff6b35;
-  padding: 10px;
+  border: 2px solid #ff6b35;
+  padding: 2px;
   border-radius: 10px;
   background: white;
 }

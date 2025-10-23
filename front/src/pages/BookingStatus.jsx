@@ -93,7 +93,7 @@ export default function BookingStatus() {
       });
 
       alert("✅ Event deleted successfully!");
-      navigate("/organiser-events");
+      navigate("/dashboard");
     } catch (err) {
       console.error("Error deleting event:", err);
       alert("Failed to delete event.");

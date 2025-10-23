@@ -45,6 +45,9 @@ export default function CreateEventForm() {
     ],
   };
 
+  // ✅ Today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData((prev) => ({ ...prev, [name]: files ? files[0] : value }));
@@ -76,6 +79,35 @@ export default function CreateEventForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ✅ 1. Validate future dates
+    const now = new Date();
+    const start = new Date(venue.startDate);
+    const end = new Date(venue.endDate);
+
+    if (start < now.setHours(0, 0, 0, 0)) {
+      alert("Start date cannot be in the past.");
+      return;
+    }
+    if (end < start) {
+      alert("End date cannot be before the start date.");
+      return;
+    }
+
+    // ✅ 2. Validate future times (for today's date)
+    const todayStr = new Date().toISOString().split("T")[0];
+    const currentTime = new Date().toTimeString().slice(0, 5);
+
+    for (const t of venue.timings) {
+      if (venue.startDate === todayStr && t.fromTime < currentTime) {
+        alert("Show start time must be in the future.");
+        return;
+      }
+      if (t.fromTime >= t.toTime) {
+        alert("Show end time must be later than start time.");
+        return;
+      }
+    }
+
     if (!venue.location || !venue.startDate || !venue.endDate) {
       alert("Please fill location, start date, and end date");
       return;
@@ -83,8 +115,6 @@ export default function CreateEventForm() {
 
     try {
       const data = new FormData();
-
-      // ✅ Append organiserId from localStorage
       const organiserId = localStorage.getItem("userId");
       const token = localStorage.getItem("accessToken");
 
@@ -159,6 +189,7 @@ export default function CreateEventForm() {
               name="category"
               value={formData.category}
               onChange={handleChange}
+              required
             >
               <option value="">Select category</option>
               <option value="movies">Movies</option>
@@ -204,6 +235,7 @@ export default function CreateEventForm() {
               name="startDate"
               value={venue.startDate}
               onChange={handleVenueChange}
+              min={today} // ✅ Prevent past dates
               required
             />
           </label>
@@ -215,6 +247,7 @@ export default function CreateEventForm() {
               name="endDate"
               value={venue.endDate}
               onChange={handleVenueChange}
+              min={venue.startDate || today} // ✅ Must be same or later
               required
             />
           </label>
