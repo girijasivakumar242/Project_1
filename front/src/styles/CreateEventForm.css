@@ -11,7 +11,7 @@ html, body {
 .create-event-container {
   width: 100%;
   min-height: 50vh;
-  padding: 50px 450px 50px 450px; /* reduced from 450px */
+  padding: 0px 450px 50px 450px; /* reduced from 450px */
   box-sizing: border-box;
   display: flex;
   justify-content: center;

@@ -3,14 +3,12 @@
 body {
   background-color: #fce0c7;
 }
-.main-content {
-  padding-top: 120px; /* adjust to your header height */
-}
+
 .event-details-page {
   max-width: 200px;
   margin: 0 auto;
   padding: 20px;
-  margin-top: 350px;
+  margin-top: 10px;
   font-family: "Poppins", sans-serif;
 }
 
